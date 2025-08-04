@@ -1,11 +1,11 @@
-# Nudge API - 다중 데이터베이스 설정
+# ng API - 다중 데이터베이스 설정
 
 이 프로젝트는 JPA를 사용하여 2개의 분리된 데이터베이스 서버에 연결하는 Spring Boot 애플리케이션입니다.
 
 ## 데이터베이스 구조
 
 - **유저 데이터베이스 (user_db)**: 사용자 정보 저장
-- **데이터 데이터베이스 (data_db)**: 넛지 상담 데이터, 포인트 내역, 성공 사례 등 저장
+- **데이터 데이터베이스 (data_db)**: 데이터, 포인트 내역, 성공 사례 등 저장
 
 ## 설정 방법
 
@@ -68,29 +68,29 @@ spring:
 
 ### 대시보드 API
 
-- `GET /api/dashboard/{skid}` - 대시보드 데이터 조회 (월별/일별 통계, 포인트 정보, 성공 사례 등)
+- `GET /api/dashboard/{userId}` - 대시보드 데이터 조회 (월별/일별 통계, 포인트 정보, 성공 사례 등)
 
 ### 포인트 시스템 API
 
-- `GET /api/points/{skid}/info` - **통합 포인트 정보 조회** (현재 포인트, 등급, 내역 모두 포함)
-- `GET /api/points/{skid}/balance` - 현재 포인트 잔액 조회
-- `GET /api/points/{skid}/history` - 포인트 내역 조회
-- `GET /api/points/{skid}/history/{pointType}` - 포인트 타입별 내역 조회 (EARN/USE)
-- `POST /api/points/{skid}/earn` - 포인트 적립
-- `POST /api/points/{skid}/use` - 포인트 사용
-- `POST /api/points/{skid}/earn/nudge-success` - 넛지 성공 시 포인트 적립
-- `POST /api/points/{skid}/earn/customer-satisfaction` - 고객 만족도 우수 시 포인트 적립
-- `POST /api/points/{skid}/earn/daily-achievement` - 일일 성과 달성 시 포인트 적립
-- `POST /api/points/{skid}/earn/weekly-first` - 주간 성과 1위 시 포인트 적립
-- `POST /api/points/{skid}/earn/monthly-excellence` - 월간 우수상담원 시 포인트 적립
-- `GET /api/points/{skid}/stats` - 포인트 통계 조회
+- `GET /api/points/{userId}/info` - **통합 포인트 정보 조회** (현재 포인트, 등급, 내역 모두 포함)
+- `GET /api/points/{userId}/balance` - 현재 포인트 잔액 조회
+- `GET /api/points/{userId}/history` - 포인트 내역 조회
+- `GET /api/points/{userId}/history/{pointType}` - 포인트 타입별 내역 조회 (EARN/USE)
+- `POST /api/points/{userId}/earn` - 포인트 적립
+- `POST /api/points/{userId}/use` - 포인트 사용
+- `POST /api/points/{userId}/earn/ng-success` -  성공 시 포인트 적립
+- `POST /api/points/{userId}/earn/customer-satisfaction` - 고객 만족도 우수 시 포인트 적립
+- `POST /api/points/{userId}/earn/daily-achievement` - 일일 성과 달성 시 포인트 적립
+- `POST /api/points/{userId}/earn/weekly-first` - 주간 성과 1위 시 포인트 적립
+- `POST /api/points/{userId}/earn/monthly-excellence` - 월간 우수원 시 포인트 적립
+- `GET /api/points/{userId}/stats` - 포인트 통계 조회
 
 ### 스케줄러 API
 
-- `POST /api/scheduler/nudge-points/{date}` - 특정 날짜의 넛지 포인트 적립 수동 실행
-- `POST /api/scheduler/nudge-points/yesterday` - 어제 날짜의 넛지 포인트 적립 수동 실행
-- `GET /api/scheduler/nudge-count/{skid}/{date}` - 특정 사용자의 특정 날짜 넛지 성공 건수 조회
-- `GET /api/scheduler/skids` - 전체 구성원 목록 조회
+- `POST /api/scheduler/ng-points/{date}` - 특정 날짜의  포인트 적립 수동 실행
+- `POST /api/scheduler/ng-points/yesterday` - 어제 날짜의  포인트 적립 수동 실행
+- `GET /api/scheduler/ng-count/{userId}/{date}` - 특정 사용자의 특정 날짜  성공 건수 조회
+- `GET /api/scheduler/userIds` - 전체 구성원 목록 조회
 - `GET /api/scheduler/status` - 스케줄러 상태 확인
 
 ## 데이터베이스 테이블 구조
@@ -99,7 +99,7 @@ spring:
 - `users` - 사용자 정보
 
 ### 데이터 데이터베이스 (data_db)
-- `nudge_consultations` - 넛지 상담 데이터
+- `ng_consultations` -   데이터
 - `point_history` - 포인트 적립/사용 내역
 - `success_stories` - 동료 성공 사례
 - `user_data` - 기타 유저 데이터
@@ -107,20 +107,20 @@ spring:
 ## 주요 기능
 
 ### 1. 대시보드 기능
-- 월별/일별 넛지 성공률 통계
-- 마케팅 타입별 성공 건수 (GIGA 전환, CRM 전환, TDS 전환)
+- 월별/일별  성공률 통계
+타입별 성공 건수 ( 전환,  전환,  전환)
 - 동료 성공 사례 조회
 - 포인트 시스템 및 등급 관리
 
 ### 2. 포인트 시스템
-- 넛지 성공 시 자동 포인트 적립
+-  성공 시 자동 포인트 적립
 - 등급별 혜택 시스템 (브론즈, 실버, 골드, 플래티넘)
 - 포인트 적립/사용 내역 관리
 - 팀 내 순위 시스템
 - **통합 포인트 정보 API**: 하나의 API 호출로 현재 포인트, 등급, 적립/사용 내역을 모두 조회
 
 ### 3. 스케줄러 시스템
-- **자동 포인트 적립**: 매일 새벽 2시에 어제 넛지 성공 건수에 따라 건당 50포인트씩 자동 적립
+- **자동 포인트 적립**: 매일 새벽 2시에 어제  성공 건수에 따라 건당 50포인트씩 자동 적립
 - **수동 실행**: 특정 날짜의 포인트 적립을 수동으로 실행 가능
 - **실시간 모니터링**: 스케줄러 상태 및 실행 결과 확인
 
@@ -152,8 +152,8 @@ curl http://localhost:8080/api/points/KIM001/info
       "id": 1,
       "pointType": "EARN",
       "pointAmount": 150,
-      "pointReason": "넛지 성공 보너스",
-      "pointDescription": "고객이 넛지 제안에 동의하여 포인트를 적립받았습니다.",
+      "pointReason": "성공 보너스",
+      "pointDescription": "포인트를 적립받았습니다.",
       "balanceAfter": 2450,
       "createdAt": "2025-01-29 14:30:00"
     }
@@ -174,24 +174,24 @@ curl http://localhost:8080/api/points/KIM001/info
 
 ### 스케줄러 수동 실행
 ```bash
-# 특정 날짜의 넛지 포인트 적립 실행
-curl -X POST http://localhost:8080/api/scheduler/nudge-points/2025-01-29
+# 특정 날짜의 포인트 적립 실행
+curl -X POST http://localhost:8080/api/scheduler/ng-points/2025-01-29
 
-# 어제 날짜의 넛지 포인트 적립 실행
-curl -X POST http://localhost:8080/api/scheduler/nudge-points/yesterday
+# 어제 날짜의 포인트 적립 실행
+curl -X POST http://localhost:8080/api/scheduler/ng-points/yesterday
 ```
 
-### 넛지 성공 건수 조회
+### 성공 건수 조회
 ```bash
-curl http://localhost:8080/api/scheduler/nudge-count/KIM001/2025-01-29
+curl http://localhost:8080/api/scheduler/ng-count/KIM001/2025-01-29
 ```
 
 응답 예시:
 ```json
 {
-  "skid": "KIM001",
+  "id": "KIM001",
   "date": "2025-01-29",
-  "nudgeSuccessCount": 3,
+  "ngSuccessCount": 3,
   "estimatedPoints": 150
 }
 ```
@@ -206,8 +206,8 @@ curl http://localhost:8080/api/scheduler/status
 {
   "schedulerEnabled": true,
   "nextExecution": "매일 새벽 2시",
-  "pointsPerNudge": 50,
-  "description": "어제 넛지 성공 건수에 따라 건당 50포인트씩 적립"
+  "pointsPerng": 50,
+  "description": "어제 성공 건수에 따라 건당 50포인트씩 적립"
 }
 ```
 
@@ -217,8 +217,8 @@ curl -X POST http://localhost:8080/api/points/KIM001/earn \
   -H "Content-Type: application/json" \
   -d '{
     "amount": 150,
-    "reason": "넛지 성공 보너스",
-    "description": "고객이 넛지 제안에 동의하여 포인트를 적립받았습니다."
+    "reason": " 성공 보너스",
+    "description": "고객이  제안에 동의하여 포인트를 적립받았습니다."
   }'
 ```
 
@@ -232,18 +232,18 @@ curl http://localhost:8080/api/points/KIM001/balance
 1. **분리된 데이터베이스**: 유저 정보와 비즈니스 데이터가 물리적으로 분리되어 있습니다.
 2. **트랜잭션 관리**: 각 데이터베이스별로 독립적인 트랜잭션 관리가 가능합니다.
 3. **통합 서비스**: 두 데이터베이스의 데이터를 함께 조회할 수 있는 통합 서비스가 제공됩니다.
-4. **포인트 시스템**: 넛지 성공에 따른 포인트 적립 및 등급 시스템을 제공합니다.
+4. **포인트 시스템**:  성공에 따른 포인트 적립 및 등급 시스템을 제공합니다.
 5. **통합 포인트 API**: 하나의 API 호출로 포인트 관련 모든 정보를 조회할 수 있습니다.
 6. **실시간 통계**: 월별/일별 통계를 실시간으로 계산하여 제공합니다.
-7. **자동 스케줄러**: 매일 새벽 2시에 어제 넛지 성공 건수에 따라 자동으로 포인트를 적립합니다.
+7. **자동 스케줄러**: 매일 새벽 2시에 어제  성공 건수에 따라 자동으로 포인트를 적립합니다.
 
 ## 스케줄러 설정
 
 ### 자동 실행 스케줄
 - **실행 시간**: 매일 새벽 2시
-- **처리 대상**: 어제 넛지 성공 건수
+- **처리 대상**: 어제 성공 건수
 - **적립 포인트**: 건당 50포인트
-- **처리 조건**: `nudgeYn = 'Y'` AND `customerConsentYn = 'Y'`
+- **처리 조건**: `ngYn = 'Y'` AND `customerConsentYn = 'Y'`
 
 ### 수동 실행
 - 특정 날짜의 포인트 적립을 수동으로 실행할 수 있습니다.
