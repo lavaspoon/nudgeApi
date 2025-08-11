@@ -26,6 +26,9 @@ public class TbUserPointSummary {
     @Column(name = "month_nudge_count")
     private Integer monthNudgeCount; // 이달 넛지 건수
 
+    @Column(name = "last_processed_month")
+    private String lastProcessedMonth; // 마지막으로 처리한 월 (YYYYMM 형식)
+
     @Column(name = "updated_date")
     private LocalDateTime updatedDate; // 최종 업데이트 일시
 
@@ -45,5 +48,17 @@ public class TbUserPointSummary {
 
     public void updateMonthNudgeCount(Integer count) {
         this.monthNudgeCount = count;
+    }
+
+    public void updateLastProcessedMonth(String month) {
+        this.lastProcessedMonth = month;
+    }
+
+    /**
+     * 월별 데이터 초기화 (새로운 월이 시작될 때)
+     */
+    public void resetMonthlyData() {
+        this.currentGrade = "bronze"; // 등급을 Bronze로 초기화
+        this.monthNudgeCount = 0; // 월간 넛지 건수를 0으로 초기화
     }
 }

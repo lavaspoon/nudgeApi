@@ -27,6 +27,8 @@ public class PointDto {
      */
     private String currentGragde; // 현재 나의 등급
 
+    private int monthNudgeCount; // 이달 넛지 건수
+
     /**
      * 적립 / 지출 내역
      */

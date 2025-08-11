@@ -75,14 +75,14 @@ import java.util.List;
  * 1. 전날(8월 11일) 넛지 건수 조회 → 3건 발견
  * 2. 8월 누적 넛지 건수 조회 → 총 25건 (Bronze 등급)
  * 3. 포인트 계산:
- *    - 기본: 3건 × 50 = 150포인트
- *    - 보너스: 150 × 0% = 0포인트 (Bronze 등급)
- *    - 총합: 150포인트
+ * - 기본: 3건 × 50 = 150포인트
+ * - 보너스: 150 × 0% = 0포인트 (Bronze 등급)
+ * - 총합: 150포인트
  * 4. TB_NUDGE_POINT에 기록 저장
  * 5. TB_USER_POINT_SUMMARY 업데이트:
- *    - 기존 총 포인트: 500 → 650 (150 추가)
- *    - 현재 등급: bronze 유지
- *    - 이달 넛지 건수: 25건으로 업데이트
+ * - 기존 총 포인트: 500 → 650 (150 추가)
+ * - 현재 등급: bronze 유지
+ * - 이달 넛지 건수: 25건으로 업데이트
  *
  * ================================================================================================
  * 4. 등급별 혜택 상세
@@ -117,7 +117,7 @@ public class PointSchedulerService {
      * - 대상자: 실장(com_code: 35)과 상담매니저(com_code: 20)
      * - 지급기준: 전날 넛지 활동 건수 × 50포인트 + 등급별 보너스
      */
-    @Scheduled(cron = "0 44 00 * * ?")
+    @Scheduled(cron = "0 49 00 * * ?")
     public void dailyPointReward() {
         log.info("일일 포인트 지급 스케줄러 시작");
 
@@ -131,19 +131,20 @@ public class PointSchedulerService {
         List<TbLmsMember> targetMembers = memberRepository.findByComCodeIn(Arrays.asList("35", "20"));
 
         int successCount = 0; // 성공 건수
-        int errorCount = 0;   // 실패 건수
+        int errorCount = 0; // 실패 건수
 
         // 각 대상자별로 포인트 지급 처리
         for (TbLmsMember member : targetMembers) {
             try {
                 // 개별 사용자의 포인트 계산 및 지급 처리
+                log.info("포인트 지급 시작: {} ({}) - 대상 날짜: {}", member.getUserId(), member.getMbName(), dateStr);
                 pointService.calculateAndRewardDailyPoints(member.getUserId(), dateStr);
                 successCount++;
-                log.debug("포인트 지급 완료: {} ({})", member.getUserId(), member.getMbName());
+                log.info("포인트 지급 완료: {} ({})", member.getUserId(), member.getMbName());
             } catch (Exception e) {
                 errorCount++;
                 log.error("포인트 지급 실패: {} ({}), 오류: {}",
-                        member.getUserId(), member.getMbName(), e.getMessage());
+                        member.getUserId(), member.getMbName(), e.getMessage(), e);
             }
         }
 

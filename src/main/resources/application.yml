@@ -23,3 +23,5 @@ spring:
 logging:
   level:
     root: INFO
+    devlava.nudgeapi: DEBUG
+    org.springframework.orm.jpa: DEBUG

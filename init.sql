@@ -548,5 +548,6 @@ CREATE TABLE TB_USER_POINT_SUMMARY (
                                        total_points INTEGER DEFAULT 0,
                                        current_grade VARCHAR(20) DEFAULT 'bronze',
                                        month_nudge_count INTEGER DEFAULT 0,
+                                       last_processed_month VARCHAR(6),
                                        updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
