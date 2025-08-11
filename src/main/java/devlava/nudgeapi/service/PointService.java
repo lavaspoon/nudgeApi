@@ -1,264 +1,139 @@
 package devlava.nudgeapi.service;
 
-import devlava.nudgeapi.dto.PointInfoDto;
-import devlava.nudgeapi.entity.data.PointHistory;
-import devlava.nudgeapi.repository.data.PointHistoryRepository;
+import devlava.nudgeapi.dto.PointDto;
+import devlava.nudgeapi.dto.PointGrade;
+import devlava.nudgeapi.entity.TbNudgePoint;
+import devlava.nudgeapi.entity.TbUserPointSummary;
+import devlava.nudgeapi.repository.TbNudgeDataRepository;
+import devlava.nudgeapi.repository.TbNudgePointRepository;
+import devlava.nudgeapi.repository.TbUserPointSummaryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(transactionManager = "dataTransactionManager")
+@Transactional
 public class PointService {
 
-    private final PointHistoryRepository pointHistoryRepository;
+    private final TbNudgePointRepository nudgePointRepository;
+    private final TbUserPointSummaryRepository userPointSummaryRepository;
+    private final TbNudgeDataRepository nudgeDataRepository;
 
     /**
-     * 포인트 적립
+     * 넛지 1건당 기본 지급 포인트
+     * 모든 등급에 공통 적용되는 기본 포인트
      */
-    public PointHistory earnPoints(String skid, int amount, String reason, String description) {
-        int currentBalance = getCurrentBalance(skid);
-        int newBalance = currentBalance + amount;
-
-        PointHistory pointHistory = new PointHistory();
-        pointHistory.setSkid(skid);
-        pointHistory.setPointType("EARN");
-        pointHistory.setPointAmount(amount);
-        pointHistory.setPointReason(reason);
-        pointHistory.setPointDescription(description);
-        pointHistory.setBalanceAfter(newBalance);
-
-        return pointHistoryRepository.save(pointHistory);
-    }
+    private static final int BASE_POINT_PER_NUDGE = 50;
 
     /**
-     * 포인트 사용
+     * 사용자의 현재 포인트 정보 조회
+     * @param userId 사용자 ID
+     * @return 포인트 정보 (현재 보유 포인트, 등급)
      */
-    public PointHistory usePoints(String skid, int amount, String reason, String description) {
-        int currentBalance = getCurrentBalance(skid);
+    public PointDto getPoint(String userId) {
+        TbUserPointSummary summary = userPointSummaryRepository.findByUserId(userId)
+                .orElse(createDefaultSummary(userId));
 
-        if (currentBalance < amount) {
-            throw new RuntimeException("포인트가 부족합니다.");
-        }
-
-        int newBalance = currentBalance - amount;
-
-        PointHistory pointHistory = new PointHistory();
-        pointHistory.setSkid(skid);
-        pointHistory.setPointType("USE");
-        pointHistory.setPointAmount(amount);
-        pointHistory.setPointReason(reason);
-        pointHistory.setPointDescription(description);
-        pointHistory.setBalanceAfter(newBalance);
-
-        return pointHistoryRepository.save(pointHistory);
-    }
-
-    /**
-     * 현재 포인트 잔액 조회
-     */
-    public int getCurrentBalance(String skid) {
-        Integer balance = pointHistoryRepository.findCurrentBalanceBySkid(skid);
-        return balance != null ? balance : 0;
-    }
-
-    /**
-     * 포인트 내역 조회
-     */
-    public List<PointHistory> getPointHistory(String skid) {
-        return pointHistoryRepository.findBySkidOrderByCreatedAtDesc(skid);
-    }
-
-    /**
-     * 포인트 타입별 내역 조회
-     */
-    public List<PointHistory> getPointHistoryByType(String skid, String pointType) {
-        return pointHistoryRepository.findBySkidAndPointTypeOrderByCreatedAtDesc(skid, pointType);
-    }
-
-    /**
-     * 총 적립 포인트 조회
-     */
-    public int getTotalEarnedPoints(String skid) {
-        Integer totalEarned = pointHistoryRepository.findTotalEarnedPointsBySkid(skid);
-        return totalEarned != null ? totalEarned : 0;
-    }
-
-    /**
-     * 총 사용 포인트 조회
-     */
-    public int getTotalUsedPoints(String skid) {
-        Integer totalUsed = pointHistoryRepository.findTotalUsedPointsBySkid(skid);
-        return totalUsed != null ? totalUsed : 0;
-    }
-
-    /**
-     * 통합 포인트 정보 조회
-     */
-    public PointInfoDto getPointInfo(String skid) {
-        // 현재 포인트 정보
-        int currentPoints = getCurrentBalance(skid);
-        String currentGrade = getGradeByPoints(currentPoints);
-        String nextGrade = getNextGradeByPoints(currentPoints);
-        int gradeProgress = calculateGradeProgress(currentPoints, currentGrade, nextGrade);
-        int weeklyEarned = calculateWeeklyEarnedPoints(skid);
-
-        // 포인트 통계
-        int totalEarned = getTotalEarnedPoints(skid);
-        int totalUsed = getTotalUsedPoints(skid);
-
-        // 포인트 내역
-        List<PointInfoDto.PointHistoryDto> earnHistory = getPointHistoryByType(skid, "EARN")
-                .stream()
-                .limit(10) // 최근 10개만
-                .map(this::convertToPointHistoryDto)
-                .collect(Collectors.toList());
-
-        List<PointInfoDto.PointHistoryDto> useHistory = getPointHistoryByType(skid, "USE")
-                .stream()
-                .limit(10) // 최근 10개만
-                .map(this::convertToPointHistoryDto)
-                .collect(Collectors.toList());
-
-        return PointInfoDto.builder()
-                .currentPoints(currentPoints)
-                .currentGrade(currentGrade)
-                .nextGrade(nextGrade)
-                .gradeProgress(gradeProgress)
-                .teamRank(3) // 실제로는 팀 순위 계산 로직 필요
-                .weeklyEarned(weeklyEarned)
-                .totalEarned(totalEarned)
-                .totalUsed(totalUsed)
-                .earnHistory(earnHistory)
-                .useHistory(useHistory)
+        return PointDto.builder()
+                .currentPoints(summary.getTotalPoints() != null ? summary.getTotalPoints() : 0)
+                .currentGragde(summary.getCurrentGrade() != null ? summary.getCurrentGrade() : "bronze")
                 .build();
     }
 
     /**
-     * PointHistory를 PointHistoryDto로 변환
+     * 특정 날짜의 넛지 활동에 대한 포인트 계산 및 지급
+     *
+     * @param userId 사용자 ID
+     * @param dateStr 대상 날짜 (yyyyMMdd 형식, 예: "20250811")
+     *
+     * 처리 과정:
+     * 1. 해당 날짜의 넛지 건수 조회
+     * 2. 이달 누적 넛지 건수로 등급 판정
+     * 3. 기본 포인트 + 등급별 보너스 포인트 계산
+     * 4. 포인트 지급 내역 저장
+     * 5. 사용자 포인트 요약 정보 업데이트
      */
-    private PointInfoDto.PointHistoryDto convertToPointHistoryDto(PointHistory pointHistory) {
-        return PointInfoDto.PointHistoryDto.builder()
-                .id(pointHistory.getId())
-                .pointType(pointHistory.getPointType())
-                .pointAmount(pointHistory.getPointAmount())
-                .pointReason(pointHistory.getPointReason())
-                .pointDescription(pointHistory.getPointDescription())
-                .balanceAfter(pointHistory.getBalanceAfter())
-                .createdAt(pointHistory.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .build();
-    }
+    public void calculateAndRewardDailyPoints(String userId, String dateStr) {
+        // Step 1: 해당 날짜의 넛지 건수 조회
+        // TB_NUDGE_DATA에서 nudge_yn='Y'이고 consulation_date가 dateStr로 시작하는 레코드 수 조회
+        // 예: dateStr="20250811"이면 "20250811%" 패턴으로 검색하여 8월 11일의 모든 넛지 건수 조회
+        Integer dailyNudgeCount = nudgeDataRepository.countNudgeByUserIdAndDate(userId, dateStr);
 
-    /**
-     * 넛지 성공 시 포인트 적립
-     */
-    public PointHistory earnPointsForNudgeSuccess(String skid) {
-        return earnPoints(skid, 150, "넛지 성공 보너스", "고객이 넛지 제안에 동의하여 포인트를 적립받았습니다.");
-    }
-
-    /**
-     * 고객 만족도 우수 시 포인트 적립
-     */
-    public PointHistory earnPointsForCustomerSatisfaction(String skid) {
-        return earnPoints(skid, 100, "고객 만족도 우수", "고객 만족도가 우수하여 포인트를 적립받았습니다.");
-    }
-
-    /**
-     * 일일 성과 달성 시 포인트 적립
-     */
-    public PointHistory earnPointsForDailyAchievement(String skid) {
-        return earnPoints(skid, 50, "일일 성과 달성", "일일 목표를 달성하여 포인트를 적립받았습니다.");
-    }
-
-    /**
-     * 주간 성과 1위 시 포인트 적립
-     */
-    public PointHistory earnPointsForWeeklyFirst(String skid) {
-        return earnPoints(skid, 200, "주간 성과 1위", "주간 성과 1위를 달성하여 포인트를 적립받았습니다.");
-    }
-
-    /**
-     * 월간 우수상담원 시 포인트 적립
-     */
-    public PointHistory earnPointsForMonthlyExcellence(String skid) {
-        return earnPoints(skid, 300, "월간 우수상담원", "월간 우수상담원으로 선정되어 포인트를 적립받았습니다.");
-    }
-
-    /**
-     * 포인트에 따른 등급 반환
-     */
-    private String getGradeByPoints(int points) {
-        if (points >= 5000)
-            return "플래티넘";
-        if (points >= 2500)
-            return "골드";
-        if (points >= 1000)
-            return "실버";
-        return "브론즈";
-    }
-
-    /**
-     * 다음 등급 반환
-     */
-    private String getNextGradeByPoints(int points) {
-        if (points < 1000)
-            return "실버";
-        if (points < 2500)
-            return "골드";
-        if (points < 5000)
-            return "플래티넘";
-        return "최고 등급";
-    }
-
-    /**
-     * 등급 진행률 계산
-     */
-    private int calculateGradeProgress(int points, String currentGrade, String nextGrade) {
-        if ("최고 등급".equals(nextGrade))
-            return 100;
-
-        int currentMin = getGradeMinPoints(currentGrade);
-        int nextMin = getGradeMinPoints(nextGrade);
-
-        if (nextMin == currentMin)
-            return 100;
-
-        return (int) ((double) (points - currentMin) / (nextMin - currentMin) * 100);
-    }
-
-    /**
-     * 등급별 최소 포인트 반환
-     */
-    private int getGradeMinPoints(String grade) {
-        switch (grade) {
-            case "브론즈":
-                return 0;
-            case "실버":
-                return 1000;
-            case "골드":
-                return 2500;
-            case "플래티넘":
-                return 5000;
-            default:
-                return 0;
+        // 넛지 건수가 없으면 포인트 지급 없이 종료
+        if (dailyNudgeCount == null || dailyNudgeCount == 0) {
+            return;
         }
+
+        // Step 2: 이달 총 넛지 건수 조회 (등급 계산용)
+        // dateStr에서 앞 6자리만 추출하여 년월 정보 생성 (예: "20250811" → "202508")
+        String monthPrefix = dateStr.substring(0, 6); // YYYYMM
+        Integer monthlyNudgeCount = nudgeDataRepository.countMonthlyNudgeByUserId(userId, monthPrefix);
+
+        // Step 3: 이달 누적 넛지 건수를 기준으로 현재 등급 계산
+        // PointGrade.getGradeByNudgeCount() 메서드로 등급 결정
+        // - 0~50건: Bronze (보너스 0%)
+        // - 51~100건: Silver (보너스 10%)
+        // - 101~150건: Gold (보너스 20%)
+        // - 151건 이상: Platinum (보너스 30%)
+        PointGrade currentGrade = PointGrade.getGradeByNudgeCount(monthlyNudgeCount != null ? monthlyNudgeCount : 0);
+
+        // Step 4: 포인트 계산
+        // 기본 포인트 = 일일 넛지 건수 × 50포인트
+        int basePoints = dailyNudgeCount * BASE_POINT_PER_NUDGE;
+
+        // 등급별 보너스 포인트 = 기본 포인트 × 등급별 보너스 비율
+        // 예: Silver 등급(10% 보너스)에서 기본 포인트가 200이면 → 200 × 0.1 = 20 보너스 포인트
+        int bonusPoints = (int) (basePoints * currentGrade.getBonusRate());
+
+        // 최종 지급 포인트 = 기본 포인트 + 보너스 포인트
+        int totalPoints = basePoints + bonusPoints;
+
+        // Step 5: 포인트 적립 기록을 TB_NUDGE_POINT 테이블에 저장
+        // 나중에 포인트 내역 조회 시 사용되는 상세 기록
+        TbNudgePoint pointRecord = TbNudgePoint.builder()
+                .userId(userId)                                                    // 사용자 ID
+                .pointAmount(totalPoints)                                          // 지급 포인트 수량
+                .pointType("EARN")                                                 // 적립 구분 (EARN/SPEND)
+                .pointReason("일일 넛지 활동 보상 (" + dailyNudgeCount + "건)")        // 적립 사유
+                .nudgeCount(dailyNudgeCount)                                       // 해당일 넛지 건수
+                .grade(currentGrade.getGradeName())                                // 적립 시점의 등급
+                .gradeBonusRate(BigDecimal.valueOf(currentGrade.getBonusRate()))   // 등급별 보너스 비율
+                .build();
+
+        nudgePointRepository.save(pointRecord);
+
+        // Step 6: 사용자 포인트 요약 정보 업데이트
+        // TB_USER_POINT_SUMMARY 테이블에서 해당 사용자 정보 조회 (없으면 기본값 생성)
+        TbUserPointSummary summary = userPointSummaryRepository.findByUserId(userId)
+                .orElse(createDefaultSummary(userId));
+
+        // 총 보유 포인트에 금일 지급 포인트 추가
+        summary.addPoints(totalPoints);
+
+        // 현재 등급을 이달 누적 넛지 건수 기준으로 업데이트
+        summary.updateGrade(currentGrade.getGradeName());
+
+        // 이달 누적 넛지 건수 업데이트
+        summary.updateMonthNudgeCount(monthlyNudgeCount);
+
+        // 업데이트된 요약 정보 저장
+        userPointSummaryRepository.save(summary);
     }
 
     /**
-     * 이번주 적립 포인트 계산
+     * 신규 사용자를 위한 기본 포인트 요약 정보 생성
+     * @param userId 사용자 ID
+     * @return 기본값으로 초기화된 포인트 요약 정보
      */
-    private int calculateWeeklyEarnedPoints(String skid) {
-        // 실제로는 이번주 데이터만 필터링해야 함
-        List<PointHistory> weeklyHistory = pointHistoryRepository.findBySkidAndPointTypeOrderByCreatedAtDesc(skid,
-                "EARN");
-        return weeklyHistory.stream()
-                .limit(10) // 임시로 최근 10개만 계산
-                .mapToInt(PointHistory::getPointAmount)
-                .sum();
+    private TbUserPointSummary createDefaultSummary(String userId) {
+        return TbUserPointSummary.builder()
+                .userId(userId)
+                .totalPoints(0)           // 초기 포인트 0
+                .currentGrade("bronze")   // 초기 등급 Bronze
+                .monthNudgeCount(0)       // 초기 넛지 건수 0
+                .build();
     }
 }
