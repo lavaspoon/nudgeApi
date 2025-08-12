@@ -72,8 +72,33 @@ public class AdminDashboardDto {
         private List<TopUserStats> crmRanking; // CRM 건수 상위 5위
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DailyNudgeStats {
+        private String date; // yyyyMMdd 형식
+        private Integer totalCount; // 전체 건수
+        private Integer nudgeCount; // 넛지 건수
+        private Integer gigaCount; // GIGA 건수
+        private Integer crmCount; // CRM 건수
+        private Integer tdsCount; // TDS 건수
+        private BigDecimal nudgeRate; // 넛지율
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeptDailyStats {
+        private Integer deptIdx;
+        private String deptName;
+        private List<DailyNudgeStats> dailyStats; // 일자별 통계
+    }
+
     private List<DeptNudgeStats> deptStats;
     private RankingStats rankings; // 4가지 카테고리별 상위 5위
+    private List<DeptDailyStats> deptDailyStats; // 부서별 일자별 넛지 건수
     private String userComCode;
     private String userDeptName;
 }

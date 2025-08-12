@@ -163,4 +163,66 @@ public interface TbNudgeDataRepository extends JpaRepository<TbNudgeData, Long> 
                         "ORDER BY crmCount DESC " +
                         "LIMIT 5")
         List<Object[]> findTop5CrmCountByMonth(@Param("monthPrefix") String monthPrefix);
+
+        /**
+         * 특정 사용자의 최근 5일 영업일 데이터 조회
+         */
+        @Query("SELECT n FROM TbNudgeData n " +
+                        "WHERE n.userId = :userId " +
+                        "AND (n.consultationDate LIKE :workingDay1 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay2 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay3 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay4 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay5 || '%') " +
+                        "ORDER BY n.consultationDate DESC, n.id DESC")
+        List<TbNudgeData> findUserDataByWorkingDays(@Param("userId") String userId,
+                        @Param("workingDay1") String workingDay1,
+                        @Param("workingDay2") String workingDay2,
+                        @Param("workingDay3") String workingDay3,
+                        @Param("workingDay4") String workingDay4,
+                        @Param("workingDay5") String workingDay5);
+
+        /**
+         * 특정 사용자의 특정 날짜별 통계 조회
+         */
+        @Query("SELECT SUBSTRING(n.consultationDate, 1, 8) as date, " +
+                        "COUNT(n) as totalCount, " +
+                        "SUM(CASE WHEN n.nudgeYn = 'Y' THEN 1 ELSE 0 END) as nudgeCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'GIGA%' THEN 1 ELSE 0 END) as gigaCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'CRM%' THEN 1 ELSE 0 END) as crmCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'TDS%' THEN 1 ELSE 0 END) as tdsCount " +
+                        "FROM TbNudgeData n " +
+                        "WHERE n.userId = :userId " +
+                        "AND (n.consultationDate LIKE :workingDay1 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay2 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay3 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay4 || '%' OR " +
+                        "     n.consultationDate LIKE :workingDay5 || '%') " +
+                        "GROUP BY SUBSTRING(n.consultationDate, 1, 8) " +
+                        "ORDER BY SUBSTRING(n.consultationDate, 1, 8) DESC")
+        List<Object[]> findUserDailyStatsByWorkingDays(@Param("userId") String userId,
+                        @Param("workingDay1") String workingDay1,
+                        @Param("workingDay2") String workingDay2,
+                        @Param("workingDay3") String workingDay3,
+                        @Param("workingDay4") String workingDay4,
+                        @Param("workingDay5") String workingDay5);
+
+        /**
+         * 부서별 이번달 일자별 넛지 통계 조회
+         */
+        @Query("SELECT m.deptIdx, m.deptName, " +
+                        "SUBSTRING(n.consultationDate, 1, 8) as date, " +
+                        "COUNT(n) as totalCount, " +
+                        "SUM(CASE WHEN n.nudgeYn = 'Y' THEN 1 ELSE 0 END) as nudgeCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'GIGA%' THEN 1 ELSE 0 END) as gigaCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'CRM%' THEN 1 ELSE 0 END) as crmCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'TDS%' THEN 1 ELSE 0 END) as tdsCount " +
+                        "FROM TbNudgeData n " +
+                        "JOIN TbLmsMember m ON n.userId = m.userId " +
+                        "WHERE m.deptIdx IN :deptIds " +
+                        "AND n.consultationDate LIKE :monthPrefix || '%' " +
+                        "GROUP BY m.deptIdx, m.deptName, SUBSTRING(n.consultationDate, 1, 8) " +
+                        "ORDER BY m.deptIdx, SUBSTRING(n.consultationDate, 1, 8)")
+        List<Object[]> findDeptDailyStatsByMonth(@Param("deptIds") List<Integer> deptIds,
+                        @Param("monthPrefix") String monthPrefix);
 }
