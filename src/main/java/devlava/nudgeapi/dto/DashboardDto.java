@@ -18,7 +18,7 @@ public class DashboardDto {
     private CurrentAnalyzeDto currentAnalyze = new CurrentAnalyzeDto(); // 영업일 기준, 하루전 통계
     private List<NudgeResponseDto> monthDatas = new ArrayList<>(); // 이달 전체 데이터
     private List<NudgeResponseDto> currentDatas = new ArrayList<>(); // 전일 전체 데이터
-    private List<SuccessStoryDto> colleagueSuccessStories = new ArrayList<>(); // 동료 성공 사례
+    private List<SuccessStoryDto> colleagueSuccesㅋsStories = new ArrayList<>(); // 동료 성공 사례
     private PointInfoDto pointInfo = new PointInfoDto(); // 포인트 정보
 
     @Data

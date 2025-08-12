@@ -551,3 +551,119 @@ CREATE TABLE TB_USER_POINT_SUMMARY (
                                        last_processed_month VARCHAR(6),
                                        updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- csm6_mgr01 사용자를 위한 7월 영업일 데이터 (날짜 형식: yyyyMMddHHmm)
+-- 7월 1일(화) - 7월 3일(목)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202507010900', 'csm6_mgr01', '인터넷 속도가 느려서 문의드립니다', 'Y', 'GIGA 전환', 'GIGA 요금제로 변경하시면 더 빠른 속도를 경험하실 수 있습니다', 'Y', 'N', NULL),
+('202507011030', 'csm6_mgr01', '월 요금이 너무 비싸요', 'Y', 'CRM 전환', 'CRM 할인 혜택을 적용해드릴 수 있습니다', 'N', 'N', NULL),
+('202507011500', 'csm6_mgr01', 'TV 채널 추가 문의', 'Y', 'TDS 전환', 'TDS 패키지 상품으로 더 많은 채널을 시청하실 수 있습니다', 'Y', 'N', NULL),
+('202507020915', 'csm6_mgr01', '서비스 해지 문의', 'N', NULL, NULL, 'N', 'Y', '해지하시면 다시 가입이 어려울 수 있습니다'),
+('202507021200', 'csm6_mgr01', '인터넷 연결 불량', 'Y', 'GIGA 전환', 'GIGA 서비스로 안정적인 연결을 제공해드립니다', 'Y', 'N', NULL),
+('202507021600', 'csm6_mgr01', '고객센터 연결 지연', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507030930', 'csm6_mgr01', '요금제 변경 문의', 'Y', 'CRM 전환', 'CRM 프로모션을 통해 더 저렴한 요금으로 이용 가능합니다', 'Y', 'N', NULL),
+('202507031145', 'csm6_mgr01', 'WiFi 비밀번호 분실', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507031430', 'csm6_mgr01', '속도 업그레이드 문의', 'Y', 'GIGA 전환', 'GIGA 요금제로 업그레이드하시면 최고 속도를 경험하실 수 있습니다', 'N', 'N', NULL);
+
+-- 7월 7일(월) - 7월 11일(금)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202507070900', 'csm6_mgr01', '인터넷 설치 문의', 'Y', 'GIGA 전환', '신규 설치 시 GIGA 서비스로 시작하시면 특별 혜택이 있습니다', 'Y', 'N', NULL),
+('202507071030', 'csm6_mgr01', '결합상품 문의', 'Y', 'TDS 전환', 'TDS 결합상품으로 더욱 경제적으로 이용하실 수 있습니다', 'Y', 'N', NULL),
+('202507071500', 'csm6_mgr01', 'VOD 서비스 문의', 'Y', 'CRM 전환', 'CRM VOD 패키지로 더 많은 콘텐츠를 즐기실 수 있습니다', 'N', 'N', NULL),
+('202507080915', 'csm6_mgr01', '요금 할인 문의', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507081200', 'csm6_mgr01', '학생 할인 문의', 'Y', 'GIGA 전환', '학생분들을 위한 GIGA 에듀 요금제가 있습니다', 'Y', 'N', NULL),
+('202507081600', 'csm6_mgr01', '온라인 수업 최적화', 'Y', 'CRM 전환', 'CRM 에듀케이션 패키지로 온라인 학습을 지원합니다', 'Y', 'N', NULL),
+('202507090930', 'csm6_mgr01', '소상공인 지원 서비스', 'Y', 'TDS 전환', '소상공인을 위한 TDS 비즈니스 솔루션을 제공합니다', 'N', 'N', NULL),
+('202507091145', 'csm6_mgr01', '매장용 WiFi 구성', 'Y', 'GIGA 전환', 'GIGA 비즈니스로 고객용 WiFi를 안정적으로 제공하세요', 'Y', 'N', NULL),
+('202507091430', 'csm6_mgr01', '인터넷 속도 불만', 'Y', 'GIGA 전환', 'GIGA 프리미엄으로 업그레이드하시면 문제가 해결됩니다', 'Y', 'N', NULL),
+('202507100900', 'csm6_mgr01', 'TV 서비스 추가', 'Y', 'TDS 전환', 'TDS 프리미엄 채널을 추가하시겠어요?', 'Y', 'N', NULL),
+('202507101030', 'csm6_mgr01', '로열 고객 전용 서비스 문의', 'Y', 'CRM 전환', 'CRM 로열 등급 고객님께는 특별한 혜택을 제공합니다', 'Y', 'N', NULL),
+('202507101500', 'csm6_mgr01', 'VIP 서비스 문의', 'Y', 'GIGA 전환', 'GIGA VIP 서비스로 최고의 품질을 경험하세요', 'N', 'N', NULL),
+('202507110915', 'csm6_mgr01', '게임 랙 문제', 'Y', 'GIGA 전환', '게이머를 위한 GIGA 게임 전용 요금제를 추천드립니다', 'Y', 'N', NULL),
+('202507111200', 'csm6_mgr01', '스트리밍 서비스 끊김', 'Y', 'TDS 전환', 'TDS 스트리밍 최적화 서비스로 끊김 없이 시청하세요', 'Y', 'N', NULL),
+('202507111600', 'csm6_mgr01', '프리미엄 고객 관리', 'Y', 'CRM 전환', 'CRM 프리미엄 고객 전용 서비스를 이용해보세요', 'N', 'N', NULL);
+
+-- 7월 14일(월) - 7월 18일(금)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202507140900', 'csm6_mgr01', '홈 네트워크 구성 문의', 'Y', 'GIGA 전환', 'GIGA 홈 네트워크 솔루션으로 집 전체를 커버합니다', 'Y', 'N', NULL),
+('202507141030', 'csm6_mgr01', '보안 서비스 추가', 'Y', 'CRM 전환', 'CRM 보안 패키지로 안전한 인터넷 환경을 만들어보세요', 'Y', 'N', NULL),
+('202507141500', 'csm6_mgr01', '스마트홈 연동', 'Y', 'TDS 전환', 'TDS IoT 서비스로 스마트홈을 완성하세요', 'N', 'N', NULL),
+('202507150915', 'csm6_mgr01', '가족 요금제 문의', 'Y', 'GIGA 전환', 'GIGA 가족 패키지로 온 가족이 함께 이용하세요', 'Y', 'N', NULL),
+('202507151200', 'csm6_mgr01', '재택근무 인터넷 구성', 'Y', 'GIGA 전환', '재택근무용 GIGA 비즈니스 요금제를 추천드립니다', 'Y', 'N', NULL),
+('202507151600', 'csm6_mgr01', '화상회의 품질 개선', 'Y', 'CRM 전환', 'CRM 화상회의 전용 서비스로 품질을 보장합니다', 'Y', 'N', NULL),
+('202507160930', 'csm6_mgr01', '기업 전용 서비스', 'Y', 'TDS 전환', 'TDS 기업 솔루션으로 업무 효율성을 높이세요', 'N', 'N', NULL),
+('202507161145', 'csm6_mgr01', '클라우드 서비스 연동', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507161430', 'csm6_mgr01', '시니어 요금제 문의', 'Y', 'CRM 전환', '시니어 고객님을 위한 CRM 실버 요금제를 추천드립니다', 'Y', 'N', NULL),
+('202507170900', 'csm6_mgr01', '간편 사용법 안내', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507171030', 'csm6_mgr01', '골드 등급 승급 안내', 'Y', 'GIGA 전환', 'GIGA 골드 등급으로 승급하시면 더 많은 혜택이 있습니다', 'Y', 'N', NULL),
+('202507171500', 'csm6_mgr01', '충성고객 리워드', 'Y', 'TDS 전환', 'TDS 리워드 프로그램에 참여해보세요', 'N', 'N', NULL),
+('202507180915', 'csm6_mgr01', '펜션 사업용 인터넷', 'Y', 'GIGA 전환', '펜션 사업자를 위한 GIGA 호스피탈리티 요금제입니다', 'Y', 'N', NULL),
+('202507181200', 'csm6_mgr01', '다중 접속 최적화', 'Y', 'CRM 전환', 'CRM 멀티 커넥션 서비스로 동시 접속을 원활하게', 'Y', 'N', NULL),
+('202507181600', 'csm6_mgr01', '크리에이터 지원 서비스', 'Y', 'TDS 전환', '크리에이터를 위한 TDS 스트리밍 전용 서비스입니다', 'N', 'N', NULL);
+
+-- 7월 21일(월) - 7월 25일(금)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202507210900', 'csm6_mgr01', '고화질 업로드 지원', 'Y', 'GIGA 전환', 'GIGA 크리에이터 요금제로 빠른 업로드를 경험하세요', 'Y', 'N', NULL),
+('202507211030', 'csm6_mgr01', '플래티넘 등급 혜택', 'Y', 'CRM 전환', '플래티넘 등급 고객님을 위한 CRM 익스클루시브 서비스', 'Y', 'N', NULL),
+('202507211500', 'csm6_mgr01', '전용 상담사 배정', 'Y', 'GIGA 전환', 'GIGA 플래티넘은 전용 상담사를 배정해드립니다', 'Y', 'N', NULL),
+('202507220915', 'csm6_mgr01', '다이아몬드 등급 심사', 'Y', 'TDS 전환', 'TDS 다이아몬드 등급 심사를 진행해드리겠습니다', 'N', 'N', NULL),
+('202507221200', 'csm6_mgr01', '최고 등급 서비스 체험', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507221600', 'csm6_mgr01', 'VIP 고객 전용 혜택 문의', 'Y', 'CRM 전환', 'VIP 고객님만을 위한 CRM 프리미엄 서비스입니다', 'Y', 'N', NULL),
+('202507230930', 'csm6_mgr01', '24시간 전담 상담 서비스', 'Y', 'GIGA 전환', 'GIGA VIP는 24시간 전담 기술지원을 제공합니다', 'Y', 'N', NULL),
+('202507231145', 'csm6_mgr01', '로열 고객 등급 관리', 'Y', 'TDS 전환', 'TDS 로열 서비스로 더 높은 등급의 혜택을 누리세요', 'N', 'N', NULL),
+('202507231430', 'csm6_mgr01', '개인 맞춤 서비스 설정', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507240900', 'csm6_mgr01', '개인사업자 인터넷 구축', 'Y', 'GIGA 전환', '개인사업자를 위한 GIGA 프로페셔널 요금제입니다', 'Y', 'N', NULL),
+('202507241030', 'csm6_mgr01', '업무용 보안 강화', 'Y', 'CRM 전환', 'CRM 비즈니스 보안 솔루션을 제안드립니다', 'N', 'N', NULL),
+('202507241500', 'csm6_mgr01', '온라인 쇼핑몰 운영', 'Y', 'TDS 전환', 'TDS 이커머스 전용 패키지로 안정적인 운영을 보장합니다', 'Y', 'N', NULL),
+('202507250915', 'csm6_mgr01', '결제 시스템 연동', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507251200', 'csm6_mgr01', '의료진을 위한 안정적 네트워크', 'Y', 'GIGA 전환', 'GIGA 메디컬 요금제로 원격진료를 지원합니다', 'Y', 'N', NULL),
+('202507251600', 'csm6_mgr01', '환자 정보 보안', 'Y', 'CRM 전환', 'CRM 의료 특화 보안 서비스를 제공합니다', 'Y', 'N', NULL);
+
+-- 7월 28일(월) - 7월 31일(목)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202507280900', 'csm6_mgr01', '펜션 예약 시스템 연동', 'Y', 'TDS 전환', 'TDS 예약관리 시스템과 연동하여 효율적으로 운영하세요', 'N', 'N', NULL),
+('202507281030', 'csm6_mgr01', '고객 WiFi 관리', 'Y', 'GIGA 전환', 'GIGA 호스피탈리티로 고객 만족도를 높이세요', 'Y', 'N', NULL),
+('202507281500', 'csm6_mgr01', '유튜버 라이브 스트리밍', 'Y', 'CRM 전환', 'CRM 크리에이터 전용 업로드 가속 서비스입니다', 'Y', 'N', NULL),
+('202507290915', 'csm6_mgr01', '4K 영상 편집', 'Y', 'GIGA 전환', 'GIGA 크리에이터 플러스로 4K 편집을 원활하게', 'Y', 'N', NULL),
+('202507291200', 'csm6_mgr01', 'VIP 맞춤 상담', 'Y', 'TDS 전환', 'TDS VIP 전담팀이 맞춤 상담을 제공합니다', 'Y', 'N', NULL),
+('202507291600', 'csm6_mgr01', '프리미엄 기술지원', 'N', NULL, NULL, 'N', 'N', NULL),
+('202507300930', 'csm6_mgr01', '다이아몬드 회원 혜택', 'Y', 'CRM 전환', 'CRM 다이아몬드 회원님만의 특별한 혜택을 확인하세요', 'N', 'N', NULL),
+('202507301145', 'csm6_mgr01', '연간 이용료 할인', 'Y', 'GIGA 전환', 'GIGA 연간 약정으로 최대 30% 할인 혜택', 'Y', 'N', NULL),
+('202507301430', 'csm6_mgr01', '플래티넘 고객 관리', 'Y', 'TDS 전환', 'TDS 플래티넘 고객님을 위한 프리미엄 관리 서비스', 'Y', 'N', NULL),
+('202507310900', 'csm6_mgr01', '전용 핫라인 개설', 'Y', 'CRM 전환', 'CRM 플래티넘 전용 핫라인을 개설해드리겠습니다', 'Y', 'N', NULL),
+('202507311030', 'csm6_mgr01', '골드 등급 상향 검토', 'Y', 'GIGA 전환', 'GIGA 골드 플러스로 등급 상향을 검토해보세요', 'N', 'N', NULL),
+('202507311500', 'csm6_mgr01', '충성고객 보상', 'N', NULL, NULL, 'N', 'N', NULL);
+
+-- csm6_mgr01 사용자를 위한 8월 영업일 데이터 (8월 12일까지)
+-- 8월 1일(금)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202508010900', 'csm6_mgr01', '인터넷 속도가 느려서 문의드립니다', 'Y', 'GIGA 전환', 'GIGA 요금제로 변경하시면 더 빠른 속도를 경험하실 수 있습니다', 'Y', 'N', NULL),
+('202508011030', 'csm6_mgr01', '월 요금이 너무 비싸요', 'Y', 'CRM 전환', 'CRM 할인 혜택을 적용해드릴 수 있습니다', 'N', 'N', NULL),
+('202508011500', 'csm6_mgr01', 'TV 채널 추가 문의', 'Y', 'TDS 전환', 'TDS 패키지 상품으로 더 많은 채널을 시청하실 수 있습니다', 'Y', 'N', NULL);
+
+-- 8월 4일(월) - 8월 8일(금)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202508040900', 'csm6_mgr01', '서비스 해지 문의', 'N', NULL, NULL, 'N', 'Y', '해지하시면 다시 가입이 어려울 수 있습니다'),
+('202508041030', 'csm6_mgr01', '인터넷 연결 불량', 'Y', 'GIGA 전환', 'GIGA 서비스로 안정적인 연결을 제공해드립니다', 'Y', 'N', NULL),
+('202508041500', 'csm6_mgr01', '고객센터 연결 지연', 'N', NULL, NULL, 'N', 'N', NULL),
+('202508050915', 'csm6_mgr01', '요금제 변경 문의', 'Y', 'CRM 전환', 'CRM 프로모션을 통해 더 저렴한 요금으로 이용 가능합니다', 'Y', 'N', NULL),
+('202508051200', 'csm6_mgr01', 'WiFi 비밀번호 분실', 'N', NULL, NULL, 'N', 'N', NULL),
+('202508051600', 'csm6_mgr01', '속도 업그레이드 문의', 'Y', 'GIGA 전환', 'GIGA 요금제로 업그레이드하시면 최고 속도를 경험하실 수 있습니다', 'N', 'N', NULL),
+('202508060930', 'csm6_mgr01', '이사 시 서비스 이전', 'Y', 'TDS 전환', 'TDS 서비스로 이전하시면 추가 혜택을 받으실 수 있습니다', 'Y', 'N', NULL),
+('202508061145', 'csm6_mgr01', '장애신고', 'N', NULL, NULL, 'N', 'N', NULL),
+('202508061430', 'csm6_mgr01', '청구서 문의', 'Y', 'CRM 전환', 'CRM 서비스로 청구서를 더 편리하게 관리하실 수 있습니다', 'Y', 'N', NULL),
+('202508070900', 'csm6_mgr01', '인터넷 설치 문의', 'Y', 'GIGA 전환', '신규 설치 시 GIGA 서비스로 시작하시면 특별 혜택이 있습니다', 'Y', 'N', NULL),
+('202508071030', 'csm6_mgr01', '결합상품 문의', 'Y', 'TDS 전환', 'TDS 결합상품으로 더욱 경제적으로 이용하실 수 있습니다', 'Y', 'N', NULL),
+('202508071500', 'csm6_mgr01', 'VOD 서비스 문의', 'Y', 'CRM 전환', 'CRM VOD 패키지로 더 많은 콘텐츠를 즐기실 수 있습니다', 'N', 'N', NULL),
+('202508080915', 'csm6_mgr01', '요금 할인 문의', 'N', NULL, NULL, 'N', 'N', NULL),
+('202508081200', 'csm6_mgr01', '학생 할인 문의', 'Y', 'GIGA 전환', '학생분들을 위한 GIGA 에듀 요금제가 있습니다', 'Y', 'N', NULL),
+('202508081600', 'csm6_mgr01', '온라인 수업 최적화', 'Y', 'CRM 전환', 'CRM 에듀케이션 패키지로 온라인 학습을 지원합니다', 'Y', 'N', NULL);
+
+-- 8월 11일(월) - 8월 12일(화)
+INSERT INTO TB_NUDGE_DATA (consulation_date, user_id, customer_inquiry, nudge_yn, marketing_type, marketing_message, customer_consent_yn, inappropriate_response_yn, inappropriate_response_message) VALUES
+('202508110900', 'csm6_mgr01', '소상공인 지원 서비스', 'Y', 'TDS 전환', '소상공인을 위한 TDS 비즈니스 솔루션을 제공합니다', 'N', 'N', NULL),
+('202508111030', 'csm6_mgr01', '매장용 WiFi 구성', 'Y', 'GIGA 전환', 'GIGA 비즈니스로 고객용 WiFi를 안정적으로 제공하세요', 'Y', 'N', NULL),
+('202508111500', 'csm6_mgr01', '인터넷 속도 불만', 'Y', 'GIGA 전환', 'GIGA 프리미엄으로 업그레이드하시면 문제가 해결됩니다', 'Y', 'N', NULL),
+('202508120915', 'csm6_mgr01', 'TV 서비스 추가', 'Y', 'TDS 전환', 'TDS 프리미엄 채널을 추가하시겠어요?', 'Y', 'N', NULL),
+('202508121200', 'csm6_mgr01', '로열 고객 전용 서비스 문의', 'Y', 'CRM 전환', 'CRM 로열 등급 고객님께는 특별한 혜택을 제공합니다', 'Y', 'N', NULL),
+('202508121600', 'csm6_mgr01', 'VIP 서비스 문의', 'Y', 'GIGA 전환', 'GIGA VIP 서비스로 최고의 품질을 경험하세요', 'N', 'N', NULL);
