@@ -23,13 +23,17 @@ public class ChartService {
      * 특정 사용자의 전월과 이번달 영업일별 nudgeYn 건수를 조회
      */
     public ChartDto getMonthlyNudgeCountByBusinessDays(String userId) {
-        LocalDate now = LocalDate.now();
+        // 테스트를 위해 2025년 8월로 하드코딩
+        LocalDate now = LocalDate.of(2025, 8, 15); // 2025년 8월 15일로 설정
         LocalDate currentMonth = now.withDayOfMonth(1);
         LocalDate lastMonth = currentMonth.minusMonths(1);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
         String lastMonthPrefix = lastMonth.format(formatter);
         String currentMonthPrefix = currentMonth.format(formatter);
+
+        log.info("생성된 월별 접두사 - lastMonthPrefix: {}, currentMonthPrefix: {}",
+                lastMonthPrefix, currentMonthPrefix);
 
         log.info("조회 조건 - userId: {}, lastMonth: {}, currentMonth: {}",
                 userId, lastMonthPrefix, currentMonthPrefix);
@@ -40,31 +44,38 @@ public class ChartService {
 
         log.info("조회된 raw 데이터 건수: {}", nudgeData.size());
 
+        // 디버깅을 위해 각 데이터 출력
+        for (Object[] data : nudgeData) {
+            String consultationDate = (String) data[0];
+            Integer count = ((Number) data[1]).intValue();
+            log.info("조회된 데이터 - consultationDate: {}, count: {}", consultationDate, count);
+        }
+
         // 데이터를 날짜별로 분류
         Map<String, Integer> lastMonthNudgeCount = new LinkedHashMap<>();
         Map<String, Integer> currentMonthNudgeCount = new LinkedHashMap<>();
 
         for (Object[] data : nudgeData) {
-            String consultationDate = (String) data[0];
+            String consultationDate = (String) data[0]; // SUBSTRING으로 반환된 8자리 날짜
             Integer count = ((Number) data[1]).intValue();
 
-            // consultationDate가 8자리 이상인지 확인
-            if (consultationDate != null && consultationDate.length() >= 8) {
-                String dateKey = consultationDate.substring(0, 8); // yyyyMMdd 형식
+            log.info("처리 중인 데이터 - consultationDate: {}, count: {}", consultationDate, count);
 
+            // consultationDate가 8자리인지 확인 (SUBSTRING으로 이미 8자리로 잘린 상태)
+            if (consultationDate != null && consultationDate.length() == 8) {
                 try {
-                    LocalDate date = LocalDate.parse(dateKey, DateTimeFormatter.ofPattern("yyyyMMdd"));
+                    LocalDate date = LocalDate.parse(consultationDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
 
                     // 영업일인지 확인
                     if (isBusinessDay(date)) {
                         if (consultationDate.startsWith(lastMonthPrefix)) {
-                            lastMonthNudgeCount.put(dateKey, count);
+                            lastMonthNudgeCount.put(consultationDate, count);
                         } else if (consultationDate.startsWith(currentMonthPrefix)) {
-                            currentMonthNudgeCount.put(dateKey, count);
+                            currentMonthNudgeCount.put(consultationDate, count);
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("날짜 파싱 오류 - dateKey: {}, error: {}", dateKey, e.getMessage());
+                    log.warn("날짜 파싱 오류 - consultationDate: {}, error: {}", consultationDate, e.getMessage());
                 }
             }
         }
@@ -87,6 +98,33 @@ public class ChartService {
                 .lastMonthTotal(lastMonthTotal)
                 .currentMonthTotal(currentMonthTotal)
                 .build();
+    }
+
+    /**
+     * 특정 사용자의 특정 날짜 nudgeYn 건수를 조회
+     */
+    public Map<String, Integer> getNudgeCountByUserIdAndDate(String userId, String datePrefix) {
+        log.info("특정 날짜 조회 - userId: {}, datePrefix: {}", userId, datePrefix);
+
+        List<Object[]> nudgeData = tbNudgeDataRepository.getNudgeCountByUserIdAndDate(userId, datePrefix);
+
+        log.info("조회된 raw 데이터 건수: {}", nudgeData.size());
+
+        Map<String, Integer> result = new LinkedHashMap<>();
+
+        for (Object[] data : nudgeData) {
+            String consultationDate = (String) data[0]; // SUBSTRING으로 반환된 8자리 날짜
+            Integer count = ((Number) data[1]).intValue();
+
+            log.info("조회된 데이터 - consultationDate: {}, count: {}", consultationDate, count);
+
+            if (consultationDate != null && consultationDate.length() == 8) {
+                result.put(consultationDate, count);
+            }
+        }
+
+        log.info("최종 결과: {}", result);
+        return result;
     }
 
     /**
