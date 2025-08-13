@@ -23,13 +23,13 @@ public class AdminDashboardDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DeptNudgeStats {
-        private Integer deptIdx;
-        private String deptName;
-        private Integer totalMembers;
-        private Integer totalCount;
-        private Integer totalNudgeCount;
-        private Integer totalSuccessCount;
-        private List<UserNudgeStats> userStats; // 부서별 사용자 통계 추가
+        private Integer deptIdx; // 부서 인덱스
+        private String deptName; // 부서명
+        private Integer totalMembers; // 부서 전체 구성원 수
+        private Integer totalCount; // 부서 전체 총 건수
+        private Integer totalNudgeCount; // 부서 전체 넛지 건수
+        private Integer totalSuccessCount; // 부서 전체 성공 건수
+        private List<UserNudgeStats> userStats; // 부서별 사용자 통계 목록
     }
 
     @Data
@@ -37,10 +37,10 @@ public class AdminDashboardDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UserNudgeStats {
-        private String userId;
-        private String userName;
-        private String mbPositionName;
-        private Integer totalCount; // 이달 타겟 건수
+        private String userId; // 사용자 ID
+        private String userName; // 사용자명
+        private String mbPositionName; // 사용자 직급명
+        private Integer totalCount; // 이달 총 건수
         private Integer nudgeCount; // 이달 넛지 건수
         private Integer gigaCount; // 이달 GIGA 건수
         private Integer crmCount; // 이달 CRM 건수
@@ -52,12 +52,13 @@ public class AdminDashboardDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TopUserStats {
-        private String userId;
-        private String userName;
-        private String deptName;
-        private Integer totalCount;
-        private Integer totalNudgeCount;
-        private Integer totalSuccessCount;
+        private String userId; // 사용자 ID
+        private String userName; // 사용자명
+        private String deptName; // 부서명
+        private Integer totalCount; // 해당 카테고리 총 건수
+        private Integer totalNudgeCount; // 넛지 총 건수
+        private Integer totalSuccessCount; // 성공 총 건수
+        private BigDecimal nudgeSuccessRate; // 넛지 성공률
     }
 
     @Data
@@ -76,9 +77,9 @@ public class AdminDashboardDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DeptMonthlyStats {
-        private Integer deptIdx;
-        private String deptName;
-        private List<MonthlyNudgeStats> monthlyStats; // 월별 통계
+        private Integer deptIdx; // 부서 인덱스
+        private String deptName; // 부서명
+        private List<MonthlyNudgeStats> monthlyStats; // 월별 통계 목록
     }
 
     @Data
