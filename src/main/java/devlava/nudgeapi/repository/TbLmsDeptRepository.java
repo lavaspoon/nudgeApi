@@ -44,8 +44,8 @@ public interface TbLmsDeptRepository extends JpaRepository<TbLmsDept, Integer> {
     List<TbLmsDept> findByParentIsNullAndUseYn(@Param("useYn") String useYn);
 
     /**
-     * parent 부서가 2 또는 3인 부서들 조회
+     * 타겟 부서
      */
-    @Query("SELECT d FROM TbLmsDept d WHERE d.parent.id IN (2, 3) AND d.useYn = 'Y'")
-    List<TbLmsDept> findByParentIdIn2Or3();
+    @Query("SELECT d FROM TbLmsDept d WHERE d.id IN :userDeptIdx AND d.useYn = 'Y'")
+    List<TbLmsDept> findByTargetDepts(@Param("userDeptIdx") List<Integer> userDeptIdx);
 }

@@ -225,4 +225,44 @@ public interface TbNudgeDataRepository extends JpaRepository<TbNudgeData, Long> 
                         "ORDER BY m.deptIdx, SUBSTRING(n.consultationDate, 1, 8)")
         List<Object[]> findDeptDailyStatsByMonth(@Param("deptIds") List<Integer> deptIds,
                         @Param("monthPrefix") String monthPrefix);
+
+        /**
+         * 부서별 월별 넛지 통계 조회 (최근 6개월)
+         */
+        @Query("SELECT m.deptIdx, m.deptName, " +
+                        "SUBSTRING(n.consultationDate, 1, 6) as month, " +
+                        "COUNT(n) as totalCount, " +
+                        "SUM(CASE WHEN n.nudgeYn = 'Y' THEN 1 ELSE 0 END) as nudgeCount, " +
+                        "SUM(CASE WHEN n.customerConsentYn = 'Y' THEN 1 ELSE 0 END) as successCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'GIGA%' THEN 1 ELSE 0 END) as gigaCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'CRM%' THEN 1 ELSE 0 END) as crmCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'TDS%' THEN 1 ELSE 0 END) as tdsCount " +
+                        "FROM TbNudgeData n " +
+                        "JOIN TbLmsMember m ON n.userId = m.userId " +
+                        "WHERE m.deptIdx IN :deptIds " +
+                        "AND n.consultationDate LIKE CONCAT(:month, '%') " +
+                        "GROUP BY m.deptIdx, m.deptName, SUBSTRING(n.consultationDate, 1, 6) " +
+                        "ORDER BY m.deptIdx, SUBSTRING(n.consultationDate, 1, 6)")
+        List<Object[]> findDeptMonthlyStatsByMonth(@Param("deptIds") List<Integer> deptIds,
+                        @Param("month") String month);
+
+        /**
+         * 부서별 월별 넛지 통계 조회 (여러 월)
+         */
+        @Query("SELECT m.deptIdx, m.deptName, " +
+                        "SUBSTRING(n.consultationDate, 1, 6) as month, " +
+                        "COUNT(n) as totalCount, " +
+                        "SUM(CASE WHEN n.nudgeYn = 'Y' THEN 1 ELSE 0 END) as nudgeCount, " +
+                        "SUM(CASE WHEN n.customerConsentYn = 'Y' THEN 1 ELSE 0 END) as successCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'GIGA%' THEN 1 ELSE 0 END) as gigaCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'CRM%' THEN 1 ELSE 0 END) as crmCount, " +
+                        "SUM(CASE WHEN n.marketingType LIKE 'TDS%' THEN 1 ELSE 0 END) as tdsCount " +
+                        "FROM TbNudgeData n " +
+                        "JOIN TbLmsMember m ON n.userId = m.userId " +
+                        "WHERE m.deptIdx IN :deptIds " +
+                        "AND SUBSTRING(n.consultationDate, 1, 6) IN :months " +
+                        "GROUP BY m.deptIdx, m.deptName, SUBSTRING(n.consultationDate, 1, 6) " +
+                        "ORDER BY m.deptIdx, SUBSTRING(n.consultationDate, 1, 6)")
+        List<Object[]> findDeptMonthlyStatsByMonths(@Param("deptIds") List<Integer> deptIds,
+                        @Param("months") List<String> months);
 }

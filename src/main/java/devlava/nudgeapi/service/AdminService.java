@@ -37,30 +37,31 @@ public class AdminService {
          * 관리자 대시보드 데이터 조회
          */
         public AdminDashboardDto getAdminDashboard(String userId) {
-                // 현재 사용자 정보 조회
-                TbLmsMember currentUser = memberRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-
-                String comCode = currentUser.getComCode();
-                Integer userDeptIdx = currentUser.getDeptIdx();
-
-                // 이번달 날짜 형식
+                // 기준 날짜
                 String currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
 
-                List<AdminDashboardDto.DeptNudgeStats> deptStats = new ArrayList<>();
-                List<AdminDashboardDto.DeptDailyStats> deptDailyStats = new ArrayList<>();
+                // 현재 사용자 정보 조회
+                TbLmsMember member = memberRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+                Integer comCode = Integer.parseInt(member.getComCode());
+                Integer userDeptIdx = member.getDeptIdx();
+                List<Integer> deptIds = new ArrayList<>();
 
-                if (Integer.parseInt(comCode) >= 45) {
-                        // comCode 45 이상: 하위 부서 그룹화하여 조회
-                        deptStats = getDeptStatsForHighLevelAdmin(userDeptIdx, currentMonth);
-                        deptDailyStats = getDeptDailyStatsForHighLevelAdmin(userDeptIdx, currentMonth);
-                } else if (Integer.parseInt(comCode) >= 35) {
-                        // comCode 35 이상: 자신의 실 구성원만 조회
-                        deptStats = getDeptStatsForMidLevelAdmin(userDeptIdx, currentMonth);
-                        deptDailyStats = getDeptDailyStatsForMidLevelAdmin(userDeptIdx, currentMonth);
+                // 하위 부서 세팅
+                if (comCode >= 45) {
+                        deptIds.addAll(Arrays.asList(4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14));
+                } else if (comCode >= 35) {
+                        deptIds.add(userDeptIdx);
                 } else {
                         throw new RuntimeException("관리자 권한이 없습니다.");
                 }
+
+                // 이달, 모든 부서의 통계 및 구성원 데이터
+                List<AdminDashboardDto.DeptNudgeStats> deptStats = getDeptStatsForHighLevelAdmin(deptIds, currentMonth);
+                // 이달, 실별 월별 넛지 건수
+                List<AdminDashboardDto.DeptMonthlyStats> deptMonthlyStats = getDeptMonthlyStatsForHighLevelAdmin(
+                                deptIds,
+                                currentMonth);
 
                 // 4가지 카테고리별 상위 5위 조회
                 AdminDashboardDto.RankingStats rankings = getRankingStats(currentMonth);
@@ -68,19 +69,17 @@ public class AdminService {
                 return AdminDashboardDto.builder()
                                 .deptStats(deptStats)
                                 .rankings(rankings)
-                                .deptDailyStats(deptDailyStats)
-                                .userComCode(comCode)
-                                .userDeptName(currentUser.getDeptName())
+                                .deptMonthlyStats(deptMonthlyStats)
                                 .build();
         }
 
         /**
-         * comCode 45 이상 관리자용 부서 통계 조회
+         * 부서 통계 조회
          */
-        private List<AdminDashboardDto.DeptNudgeStats> getDeptStatsForHighLevelAdmin(Integer userDeptIdx,
+        private List<AdminDashboardDto.DeptNudgeStats> getDeptStatsForHighLevelAdmin(List<Integer> deptId,
                         String currentMonth) {
-                // parent 부서가 2 또는 3인 부서들 조회
-                List<TbLmsDept> targetDepts = deptRepository.findByParentIdIn2Or3();
+
+                List<TbLmsDept> targetDepts = deptRepository.findByTargetDepts(deptId);
 
                 // 모든 부서 ID 추출
                 List<Integer> deptIds = targetDepts.stream()
@@ -100,18 +99,11 @@ public class AdminService {
 
                 // 모든 사용자의 상세 통계를 한 번에 조회 (N+1 방지)
                 final Map<String, Object[]> userDetailedStatsMap = new HashMap<>();
-                final Map<String, Object[]> userPrevDayStatsMap = new HashMap<>();
-
                 if (!allUserIds.isEmpty()) {
                         // 이번달 상세 통계 조회
                         List<Object[]> detailedStats = nudgeDataRepository.findUserDetailedStatsByMonth(allUserIds,
                                         currentMonth);
                         userDetailedStatsMap.putAll(detailedStats.stream()
-                                        .collect(Collectors.toMap(stat -> (String) stat[0], stat -> stat)));
-
-                        // 전일 통계 조회
-                        List<Object[]> prevDayStats = nudgeDataRepository.findUserPrevDayStats(allUserIds, "20250812");
-                        userPrevDayStatsMap.putAll(prevDayStats.stream()
                                         .collect(Collectors.toMap(stat -> (String) stat[0], stat -> stat)));
                 }
 
@@ -120,109 +112,24 @@ public class AdminService {
                                 .map(dept -> getDeptNudgeStatsWithMembersAndStats(dept.getId(), dept.getDeptName(),
                                                 deptMemberMap.getOrDefault(dept.getId(), new ArrayList<>()),
                                                 currentMonth,
-                                                userDetailedStatsMap, userPrevDayStatsMap))
+                                                userDetailedStatsMap))
                                 .filter(stats -> stats.getTotalMembers() > 0) // 구성원이 있는 부서만
                                 .collect(Collectors.toList());
-        }
-
-        /**
-         * comCode 35 이상 관리자용 부서 통계 조회
-         */
-        private List<AdminDashboardDto.DeptNudgeStats> getDeptStatsForMidLevelAdmin(Integer userDeptIdx,
-                        String currentMonth) {
-                // 자신의 부서만 조회
-                List<TbLmsMember> members = memberRepository.findByDeptIdx(userDeptIdx);
-                if (members.isEmpty()) {
-                        return new ArrayList<>();
-                }
-
-                // 부서 정보 조회
-                TbLmsDept dept = deptRepository.findById(userDeptIdx).orElse(null);
-                String deptName = dept != null ? dept.getDeptName() : "알 수 없는 부서";
-
-                AdminDashboardDto.DeptNudgeStats stats = getDeptNudgeStatsWithMembers(userDeptIdx, deptName, members,
-                                currentMonth);
-                return stats.getTotalMembers() > 0 ? List.of(stats) : new ArrayList<>();
-        }
-
-        /**
-         * 특정 부서의 넛지 통계 조회 (사용자 목록 미리 조회된 버전)
-         */
-        private AdminDashboardDto.DeptNudgeStats getDeptNudgeStatsWithMembers(Integer deptIdx, String deptName,
-                        List<TbLmsMember> members, String currentMonth) {
-                if (members.isEmpty()) {
-                        return AdminDashboardDto.DeptNudgeStats.builder()
-                                        .deptIdx(deptIdx)
-                                        .deptName(deptName)
-                                        .totalMembers(0)
-                                        .totalNudgeCount(0)
-                                        .totalSuccessCount(0)
-                                        .nudgeRate(BigDecimal.ZERO)
-                                        .workingDays(0)
-                                        .avgNudgePerDay(0)
-                                        .userStats(new ArrayList<>())
-                                        .build();
-                }
-
-                // 구성원들의 넛지 통계 조회 (N+1 방지)
-                List<String> memberIds = members.stream()
-                                .map(TbLmsMember::getUserId)
-                                .collect(Collectors.toList());
-
-                List<Object[]> nudgeStats = nudgeDataRepository.findNudgeStatsByUserIds(memberIds, currentMonth);
-
-                // 통계 계산
-                int totalNudgeCount = 0;
-                int totalSuccessCount = 0;
-
-                for (Object[] stat : nudgeStats) {
-                        totalNudgeCount += ((Number) stat[1]).intValue();
-                        totalSuccessCount += ((Number) stat[2]).intValue();
-                }
-
-                // 넛지율 계산
-                BigDecimal nudgeRate = totalNudgeCount > 0
-                                ? BigDecimal.valueOf(totalSuccessCount)
-                                                .divide(BigDecimal.valueOf(totalNudgeCount), 4, RoundingMode.HALF_UP)
-                                                .multiply(BigDecimal.valueOf(100))
-                                : BigDecimal.ZERO;
-
-                // 이번달 영업일 계산
-                int workingDays = WorkingDayCalculator.calculateCurrentMonthWorkingDays();
-                int avgNudgePerDay = workingDays > 0 ? totalNudgeCount / workingDays : 0;
-
-                // 부서별 사용자 상세 통계 조회
-                List<AdminDashboardDto.UserNudgeStats> userStats = getUserDetailedStats(memberIds, currentMonth);
-
-                return AdminDashboardDto.DeptNudgeStats.builder()
-                                .deptIdx(deptIdx)
-                                .deptName(deptName)
-                                .totalMembers(members.size())
-                                .totalNudgeCount(totalNudgeCount)
-                                .totalSuccessCount(totalSuccessCount)
-                                .nudgeRate(nudgeRate)
-                                .workingDays(workingDays)
-                                .avgNudgePerDay(avgNudgePerDay)
-                                .userStats(userStats)
-                                .build();
         }
 
         /**
          * 특정 부서의 넛지 통계 조회 (사용자 목록과 통계 미리 조회된 버전)
          */
         private AdminDashboardDto.DeptNudgeStats getDeptNudgeStatsWithMembersAndStats(Integer deptIdx, String deptName,
-                        List<TbLmsMember> members, String currentMonth, Map<String, Object[]> userDetailedStatsMap,
-                        Map<String, Object[]> userPrevDayStatsMap) {
+                        List<TbLmsMember> members, String currentMonth, Map<String, Object[]> userDetailedStatsMap) {
                 if (members.isEmpty()) {
                         return AdminDashboardDto.DeptNudgeStats.builder()
                                         .deptIdx(deptIdx)
                                         .deptName(deptName)
                                         .totalMembers(0)
+                                        .totalCount(0)
                                         .totalNudgeCount(0)
                                         .totalSuccessCount(0)
-                                        .nudgeRate(BigDecimal.ZERO)
-                                        .workingDays(0)
-                                        .avgNudgePerDay(0)
                                         .userStats(new ArrayList<>())
                                         .build();
                 }
@@ -242,13 +149,6 @@ public class AdminService {
                         totalNudgeCount += ((Number) stat[1]).intValue();
                         totalSuccessCount += ((Number) stat[2]).intValue();
                 }
-
-                // 넛지율 계산
-                BigDecimal nudgeRate = totalNudgeCount > 0
-                                ? BigDecimal.valueOf(totalSuccessCount)
-                                                .divide(BigDecimal.valueOf(totalNudgeCount), 4, RoundingMode.HALF_UP)
-                                                .multiply(BigDecimal.valueOf(100))
-                                : BigDecimal.ZERO;
 
                 // 이번달 영업일 계산
                 int workingDays = WorkingDayCalculator.calculateCurrentMonthWorkingDays();
@@ -256,17 +156,20 @@ public class AdminService {
 
                 // 부서별 사용자 상세 통계 조회 (미리 조회된 통계 사용)
                 List<AdminDashboardDto.UserNudgeStats> userStats = getUserDetailedStatsWithPreloadedData(members,
-                                userDetailedStatsMap, userPrevDayStatsMap);
+                                userDetailedStatsMap, currentMonth);
+
+                // 부서 전체의 totalCount 계산 (모든 사용자의 totalCount 합계)
+                int totalCount = userStats.stream()
+                                .mapToInt(AdminDashboardDto.UserNudgeStats::getTotalCount)
+                                .sum();
 
                 return AdminDashboardDto.DeptNudgeStats.builder()
                                 .deptIdx(deptIdx)
                                 .deptName(deptName)
                                 .totalMembers(members.size())
+                                .totalCount(totalCount)
                                 .totalNudgeCount(totalNudgeCount)
                                 .totalSuccessCount(totalSuccessCount)
-                                .nudgeRate(nudgeRate)
-                                .workingDays(workingDays)
-                                .avgNudgePerDay(avgNudgePerDay)
                                 .userStats(userStats)
                                 .build();
         }
@@ -275,7 +178,7 @@ public class AdminService {
          * 사용자 상세 통계 조회 (미리 조회된 통계 사용)
          */
         private List<AdminDashboardDto.UserNudgeStats> getUserDetailedStatsWithPreloadedData(List<TbLmsMember> members,
-                        Map<String, Object[]> userDetailedStatsMap, Map<String, Object[]> userPrevDayStatsMap) {
+                        Map<String, Object[]> userDetailedStatsMap, String currentMonth) {
                 List<AdminDashboardDto.UserNudgeStats> userStats = new ArrayList<>();
 
                 for (TbLmsMember member : members) {
@@ -283,135 +186,41 @@ public class AdminService {
 
                         // 미리 조회된 상세 통계에서 데이터 가져오기
                         Object[] detailedStat = userDetailedStatsMap.get(userId);
-                        Object[] prevDayStat = userPrevDayStatsMap.get(userId);
 
                         int nudgeCount = 0;
                         int gigaCount = 0;
                         int crmCount = 0;
                         int tdsCount = 0;
-                        BigDecimal nudgeRate = BigDecimal.ZERO;
 
+                        int totalCount = 0;
                         if (detailedStat != null) {
+                                totalCount = ((Number) detailedStat[1]).intValue();
                                 nudgeCount = ((Number) detailedStat[2]).intValue();
                                 gigaCount = ((Number) detailedStat[3]).intValue();
                                 crmCount = ((Number) detailedStat[4]).intValue();
                                 tdsCount = ((Number) detailedStat[5]).intValue();
-
-                                int totalCount = ((Number) detailedStat[1]).intValue();
-                                nudgeRate = totalCount > 0
-                                                ? BigDecimal.valueOf(nudgeCount)
-                                                                .divide(BigDecimal.valueOf(totalCount), 4,
-                                                                                RoundingMode.HALF_UP)
-                                                                .multiply(BigDecimal.valueOf(100))
-                                                : BigDecimal.ZERO;
                         }
 
-                        // 전일 통계
-                        BigDecimal prevDayNudgeRate = BigDecimal.ZERO;
+                        // 넛지 성공률 계산을 위해 해당 사용자의 성공 건수 조회
+                        List<Object[]> userNudgeStats = nudgeDataRepository
+                                        .findNudgeStatsByUserIds(Arrays.asList(userId), currentMonth);
+                        if (!userNudgeStats.isEmpty()) {
+                                Object[] userStat = userNudgeStats.get(0);
+                                int userNudgeCount = ((Number) userStat[1]).intValue();
+                                int userSuccessCount = ((Number) userStat[2]).intValue();
+
+                        }
+
                         int prevDayNudgeCount = 0;
-
-                        if (prevDayStat != null) {
-                                int prevDayTotalCount = ((Number) prevDayStat[1]).intValue();
-                                prevDayNudgeCount = ((Number) prevDayStat[2]).intValue();
-                                prevDayNudgeRate = prevDayTotalCount > 0
-                                                ? BigDecimal.valueOf(prevDayNudgeCount)
-                                                                .divide(BigDecimal.valueOf(prevDayTotalCount), 4,
-                                                                                RoundingMode.HALF_UP)
-                                                                .multiply(BigDecimal.valueOf(100))
-                                                : BigDecimal.ZERO;
-                        }
-
                         userStats.add(AdminDashboardDto.UserNudgeStats.builder()
                                         .userId(userId)
                                         .userName(member.getMbName())
                                         .mbPositionName(member.getMbPositionName())
-                                        .nudgeRate(nudgeRate)
+                                        .totalCount(totalCount)
                                         .nudgeCount(nudgeCount)
                                         .gigaCount(gigaCount)
                                         .crmCount(crmCount)
                                         .tdsCount(tdsCount)
-                                        .prevDayNudgeRate(prevDayNudgeRate)
-                                        .prevDayNudgeCount(prevDayNudgeCount)
-                                        .build());
-                }
-
-                return userStats;
-        }
-
-        /**
-         * 사용자별 상세 통계 조회
-         */
-        private List<AdminDashboardDto.UserNudgeStats> getUserDetailedStats(List<String> memberIds,
-                        String currentMonth) {
-                if (memberIds.isEmpty()) {
-                        return new ArrayList<>();
-                }
-
-                // 이번달 상세 통계 조회
-                List<Object[]> monthlyStats = nudgeDataRepository.findUserDetailedStatsByMonth(memberIds, currentMonth);
-
-                // 전일 통계 조회
-                String prevDay = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-                List<Object[]> prevDayStats = nudgeDataRepository.findUserPrevDayStats(memberIds, prevDay);
-
-                // 사용자 정보 조회
-                Map<String, TbLmsMember> memberMap = memberRepository.findAllById(memberIds)
-                                .stream()
-                                .collect(Collectors.toMap(TbLmsMember::getUserId, member -> member));
-
-                // 통계 데이터 매핑
-                Map<String, Object[]> monthlyStatsMap = monthlyStats.stream()
-                                .collect(Collectors.toMap(stat -> (String) stat[0], stat -> stat));
-
-                Map<String, Object[]> prevDayStatsMap = prevDayStats.stream()
-                                .collect(Collectors.toMap(stat -> (String) stat[0], stat -> stat));
-
-                List<AdminDashboardDto.UserNudgeStats> userStats = new ArrayList<>();
-
-                for (String userId : memberIds) {
-                        TbLmsMember member = memberMap.get(userId);
-                        if (member == null)
-                                continue;
-
-                        Object[] monthlyStat = monthlyStatsMap.get(userId);
-                        Object[] prevDayStat = prevDayStatsMap.get(userId);
-
-                        // 이번달 통계
-                        int totalCount = monthlyStat != null ? ((Number) monthlyStat[1]).intValue() : 0;
-                        int nudgeCount = monthlyStat != null ? ((Number) monthlyStat[2]).intValue() : 0;
-                        int gigaCount = monthlyStat != null ? ((Number) monthlyStat[3]).intValue() : 0;
-                        int crmCount = monthlyStat != null ? ((Number) monthlyStat[4]).intValue() : 0;
-                        int tdsCount = monthlyStat != null ? ((Number) monthlyStat[5]).intValue() : 0;
-
-                        // 전일 통계
-                        int prevDayTotalCount = prevDayStat != null ? ((Number) prevDayStat[1]).intValue() : 0;
-                        int prevDayNudgeCount = prevDayStat != null ? ((Number) prevDayStat[2]).intValue() : 0;
-
-                        // 넛지율 계산
-                        BigDecimal nudgeRate = totalCount > 0
-                                        ? BigDecimal.valueOf(nudgeCount)
-                                                        .divide(BigDecimal.valueOf(totalCount), 4, RoundingMode.HALF_UP)
-                                                        .multiply(BigDecimal.valueOf(100))
-                                        : BigDecimal.ZERO;
-
-                        BigDecimal prevDayNudgeRate = prevDayTotalCount > 0
-                                        ? BigDecimal.valueOf(prevDayNudgeCount)
-                                                        .divide(BigDecimal.valueOf(prevDayTotalCount), 4,
-                                                                        RoundingMode.HALF_UP)
-                                                        .multiply(BigDecimal.valueOf(100))
-                                        : BigDecimal.ZERO;
-
-                        userStats.add(AdminDashboardDto.UserNudgeStats.builder()
-                                        .userId(userId)
-                                        .userName(member.getMbName())
-                                        .mbPositionName(member.getMbPositionName())
-                                        .nudgeRate(nudgeRate)
-                                        .nudgeCount(nudgeCount)
-                                        .gigaCount(gigaCount)
-                                        .crmCount(crmCount)
-                                        .tdsCount(tdsCount)
-                                        .prevDayNudgeRate(prevDayNudgeRate)
-                                        .prevDayNudgeCount(prevDayNudgeCount)
                                         .build());
                 }
 
@@ -447,7 +256,7 @@ public class AdminService {
         }
 
         /**
-         * 카테고리별 상위 사용자 통계 조회
+         * 랭킹
          */
         private List<AdminDashboardDto.TopUserStats> getTopUsersByCategory(List<Object[]> topUsersData, String category,
                         String currentMonth) {
@@ -504,36 +313,24 @@ public class AdminService {
                         // 카테고리별로 다른 통계 계산
                         int totalNudgeCount = 0;
                         int totalSuccessCount = 0;
-                        BigDecimal nudgeRate = BigDecimal.ZERO;
 
                         if ("nudge".equals(category)) {
                                 // 넛지 건수 카테고리의 경우 성공률도 계산
                                 totalNudgeCount = count;
-                                Object[] successStat = successStatsMap.get(topUserId);
-                                if (successStat != null) {
-                                        totalSuccessCount = ((Number) successStat[2]).intValue();
-                                        nudgeRate = totalNudgeCount > 0
-                                                        ? BigDecimal.valueOf(totalSuccessCount)
-                                                                        .divide(BigDecimal.valueOf(totalNudgeCount), 4,
-                                                                                        RoundingMode.HALF_UP)
-                                                                        .multiply(BigDecimal.valueOf(100))
-                                                        : BigDecimal.ZERO;
-                                }
                         } else {
                                 // GIGA, TDS, CRM 카테고리의 경우 넛지 성공률은 0으로 설정
                                 totalNudgeCount = count;
                                 totalSuccessCount = 0;
-                                nudgeRate = BigDecimal.ZERO;
+
                         }
 
                         topUsers.add(AdminDashboardDto.TopUserStats.builder()
                                         .userId(topUserId)
                                         .userName(topUser != null ? topUser.getMbName() : "알 수 없음")
                                         .deptName(topUser != null ? topUser.getDeptName() : "")
+                                        .totalCount(count)
                                         .totalNudgeCount(totalNudgeCount)
                                         .totalSuccessCount(totalSuccessCount)
-                                        .nudgeRate(nudgeRate)
-                                        .totalPoints(totalPoints != null ? totalPoints : 0)
                                         .build());
                 }
 
@@ -541,52 +338,56 @@ public class AdminService {
         }
 
         /**
-         * comCode 45 이상 관리자용 부서별 일자별 통계 조회
+         * 관리자용 부서별 월별 통계 조회
          */
-        private List<AdminDashboardDto.DeptDailyStats> getDeptDailyStatsForHighLevelAdmin(Integer userDeptIdx,
+        private List<AdminDashboardDto.DeptMonthlyStats> getDeptMonthlyStatsForHighLevelAdmin(List<Integer> userDeptIdx,
                         String currentMonth) {
                 // parent 부서가 2 또는 3인 부서들 조회
-                List<TbLmsDept> targetDepts = deptRepository.findByParentIdIn2Or3();
+                List<TbLmsDept> targetDepts = deptRepository.findByTargetDepts(userDeptIdx);
 
                 // 모든 부서 ID 추출
                 List<Integer> deptIds = targetDepts.stream()
                                 .map(TbLmsDept::getId)
                                 .collect(Collectors.toList());
 
-                // 부서별 일자별 통계 조회
-                List<Object[]> dailyStats = nudgeDataRepository.findDeptDailyStatsByMonth(deptIds, currentMonth);
+                // 부서별 월별 통계 조회 (최근 6개월)
+                List<String> months = getRecent6Months();
+                List<Object[]> monthlyStats = nudgeDataRepository.findDeptMonthlyStatsByMonths(deptIds, months);
 
                 // 부서별로 그룹화
-                Map<Integer, List<Object[]>> deptStatsMap = dailyStats.stream()
+                Map<Integer, List<Object[]>> deptStatsMap = monthlyStats.stream()
                                 .collect(Collectors.groupingBy(stat -> ((Number) stat[0]).intValue()));
 
-                List<AdminDashboardDto.DeptDailyStats> deptDailyStatsList = new ArrayList<>();
+                List<AdminDashboardDto.DeptMonthlyStats> deptMonthlyStatsList = new ArrayList<>();
 
                 for (TbLmsDept dept : targetDepts) {
                         List<Object[]> deptStats = deptStatsMap.get(dept.getId());
-                        List<AdminDashboardDto.DailyNudgeStats> dailyStatsList = new ArrayList<>();
+                        List<AdminDashboardDto.MonthlyNudgeStats> monthlyStatsList = new ArrayList<>();
 
                         if (deptStats != null) {
                                 for (Object[] stat : deptStats) {
-                                        String date = (String) stat[2];
+                                        String month = (String) stat[2];
                                         int totalCount = ((Number) stat[3]).intValue();
                                         int nudgeCount = ((Number) stat[4]).intValue();
-                                        int gigaCount = ((Number) stat[5]).intValue();
-                                        int crmCount = ((Number) stat[6]).intValue();
-                                        int tdsCount = ((Number) stat[7]).intValue();
+                                        int successCount = ((Number) stat[5]).intValue();
+                                        int gigaCount = ((Number) stat[6]).intValue();
+                                        int crmCount = ((Number) stat[7]).intValue();
+                                        int tdsCount = ((Number) stat[8]).intValue();
 
-                                        // 넛지율 계산
+                                        // 넛지율 계산 (nudgeCount / totalCount) - 소수 첫째자리까지
                                         BigDecimal nudgeRate = totalCount > 0
                                                         ? BigDecimal.valueOf(nudgeCount)
                                                                         .divide(BigDecimal.valueOf(totalCount), 4,
                                                                                         RoundingMode.HALF_UP)
                                                                         .multiply(BigDecimal.valueOf(100))
+                                                                        .setScale(1, RoundingMode.HALF_UP)
                                                         : BigDecimal.ZERO;
 
-                                        dailyStatsList.add(AdminDashboardDto.DailyNudgeStats.builder()
-                                                        .date(date)
+                                        monthlyStatsList.add(AdminDashboardDto.MonthlyNudgeStats.builder()
+                                                        .month(month)
                                                         .totalCount(totalCount)
                                                         .nudgeCount(nudgeCount)
+                                                        .successCount(successCount)
                                                         .gigaCount(gigaCount)
                                                         .crmCount(crmCount)
                                                         .tdsCount(tdsCount)
@@ -595,62 +396,29 @@ public class AdminService {
                                 }
                         }
 
-                        deptDailyStatsList.add(AdminDashboardDto.DeptDailyStats.builder()
+                        deptMonthlyStatsList.add(AdminDashboardDto.DeptMonthlyStats.builder()
                                         .deptIdx(dept.getId())
                                         .deptName(dept.getDeptName())
-                                        .dailyStats(dailyStatsList)
+                                        .monthlyStats(monthlyStatsList)
                                         .build());
                 }
 
-                return deptDailyStatsList;
+                return deptMonthlyStatsList;
         }
 
         /**
-         * comCode 35 이상 관리자용 부서별 일자별 통계 조회
+         * 최근 6개월 계산
          */
-        private List<AdminDashboardDto.DeptDailyStats> getDeptDailyStatsForMidLevelAdmin(Integer userDeptIdx,
-                        String currentMonth) {
-                // 자신의 부서만 조회
-                List<Object[]> dailyStats = nudgeDataRepository.findDeptDailyStatsByMonth(List.of(userDeptIdx),
-                                currentMonth);
+        private List<String> getRecent6Months() {
+                List<String> months = new ArrayList<>();
+                LocalDate currentDate = LocalDate.now();
 
-                // 부서 정보 조회
-                TbLmsDept dept = deptRepository.findById(userDeptIdx).orElse(null);
-                String deptName = dept != null ? dept.getDeptName() : "알 수 없는 부서";
-
-                List<AdminDashboardDto.DailyNudgeStats> dailyStatsList = new ArrayList<>();
-
-                for (Object[] stat : dailyStats) {
-                        String date = (String) stat[2];
-                        int totalCount = ((Number) stat[3]).intValue();
-                        int nudgeCount = ((Number) stat[4]).intValue();
-                        int gigaCount = ((Number) stat[5]).intValue();
-                        int crmCount = ((Number) stat[6]).intValue();
-                        int tdsCount = ((Number) stat[7]).intValue();
-
-                        // 넛지율 계산
-                        BigDecimal nudgeRate = totalCount > 0
-                                        ? BigDecimal.valueOf(nudgeCount)
-                                                        .divide(BigDecimal.valueOf(totalCount), 4, RoundingMode.HALF_UP)
-                                                        .multiply(BigDecimal.valueOf(100))
-                                        : BigDecimal.ZERO;
-
-                        dailyStatsList.add(AdminDashboardDto.DailyNudgeStats.builder()
-                                        .date(date)
-                                        .totalCount(totalCount)
-                                        .nudgeCount(nudgeCount)
-                                        .gigaCount(gigaCount)
-                                        .crmCount(crmCount)
-                                        .tdsCount(tdsCount)
-                                        .nudgeRate(nudgeRate)
-                                        .build());
+                for (int i = 5; i >= 0; i--) {
+                        LocalDate monthDate = currentDate.minusMonths(i);
+                        months.add(monthDate.format(DateTimeFormatter.ofPattern("yyyyMM")));
                 }
 
-                return List.of(AdminDashboardDto.DeptDailyStats.builder()
-                                .deptIdx(userDeptIdx)
-                                .deptName(deptName)
-                                .dailyStats(dailyStatsList)
-                                .build());
+                return months;
         }
 
         /**
@@ -762,7 +530,6 @@ public class AdminService {
                                 : BigDecimal.ZERO;
 
                 UserDetailDto.UserSummary summary = UserDetailDto.UserSummary.builder()
-                                .totalDays(totalDays)
                                 .totalCount(totalCount)
                                 .totalNudgeCount(totalNudgeCount)
                                 .totalGigaCount(totalGigaCount)

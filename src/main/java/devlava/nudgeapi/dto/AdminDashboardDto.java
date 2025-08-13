@@ -14,6 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 public class AdminDashboardDto {
 
+    private List<DeptNudgeStats> deptStats; // 부서의 통계와 구성원의 넛지건수
+    private RankingStats rankings; // 4가지 카테고리별 상위 5위
+    private List<DeptMonthlyStats> deptMonthlyStats; // 부서별 월별 넛지 건수
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -22,11 +26,9 @@ public class AdminDashboardDto {
         private Integer deptIdx;
         private String deptName;
         private Integer totalMembers;
+        private Integer totalCount;
         private Integer totalNudgeCount;
         private Integer totalSuccessCount;
-        private BigDecimal nudgeRate;
-        private Integer workingDays;
-        private Integer avgNudgePerDay;
         private List<UserNudgeStats> userStats; // 부서별 사용자 통계 추가
     }
 
@@ -38,13 +40,11 @@ public class AdminDashboardDto {
         private String userId;
         private String userName;
         private String mbPositionName;
-        private BigDecimal nudgeRate; // 이달 넛지율
+        private Integer totalCount; // 이달 타겟 건수
         private Integer nudgeCount; // 이달 넛지 건수
         private Integer gigaCount; // 이달 GIGA 건수
         private Integer crmCount; // 이달 CRM 건수
         private Integer tdsCount; // 이달 TDS 건수
-        private BigDecimal prevDayNudgeRate; // 전일 넛지율
-        private Integer prevDayNudgeCount; // 전일 넛지 건수
     }
 
     @Data
@@ -55,10 +55,9 @@ public class AdminDashboardDto {
         private String userId;
         private String userName;
         private String deptName;
+        private Integer totalCount;
         private Integer totalNudgeCount;
         private Integer totalSuccessCount;
-        private BigDecimal nudgeRate;
-        private Integer totalPoints;
     }
 
     @Data
@@ -76,29 +75,24 @@ public class AdminDashboardDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DailyNudgeStats {
-        private String date; // yyyyMMdd 형식
-        private Integer totalCount; // 전체 건수
-        private Integer nudgeCount; // 넛지 건수
-        private Integer gigaCount; // GIGA 건수
-        private Integer crmCount; // CRM 건수
-        private Integer tdsCount; // TDS 건수
-        private BigDecimal nudgeRate; // 넛지율
+    public static class DeptMonthlyStats {
+        private Integer deptIdx;
+        private String deptName;
+        private List<MonthlyNudgeStats> monthlyStats; // 월별 통계
     }
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DeptDailyStats {
-        private Integer deptIdx;
-        private String deptName;
-        private List<DailyNudgeStats> dailyStats; // 일자별 통계
+    public static class MonthlyNudgeStats {
+        private String month; // yyyyMM 형식
+        private Integer totalCount; // 전체 건수
+        private Integer nudgeCount; // 넛지 건수
+        private Integer successCount; // 성공 건수
+        private Integer gigaCount; // GIGA 건수
+        private Integer crmCount; // CRM 건수
+        private Integer tdsCount; // TDS 건수
+        private BigDecimal nudgeRate; // 넛지율 (nudgeCount / totalCount)
     }
-
-    private List<DeptNudgeStats> deptStats;
-    private RankingStats rankings; // 4가지 카테고리별 상위 5위
-    private List<DeptDailyStats> deptDailyStats; // 부서별 일자별 넛지 건수
-    private String userComCode;
-    private String userDeptName;
 }
