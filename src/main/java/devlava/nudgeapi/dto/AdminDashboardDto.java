@@ -17,6 +17,7 @@ public class AdminDashboardDto {
     private List<DeptNudgeStats> deptStats; // 부서의 통계와 구성원의 넛지건수
     private RankingStats rankings; // 4가지 카테고리별 상위 5위
     private List<DeptMonthlyStats> deptMonthlyStats; // 부서별 월별 넛지 건수
+    private BigDecimal averageNudgeRate; // 전체 평균 넛지율
 
     @Data
     @Builder
@@ -114,7 +115,13 @@ public class AdminDashboardDto {
         private BigDecimal successRateDiff; // 넛지 성공률 증감
         private BigDecimal successRateChangeRate; // 넛지 성공률 증감률 (%)
 
+        private BigDecimal prevMonthAverageNudgeRate; // 전월 평균 넛지율
+        private BigDecimal currentMonthAverageNudgeRate; // 이달 평균 넛지율
+        private BigDecimal averageNudgeRateDiff; // 평균 넛지율 증감
+        private BigDecimal averageNudgeRateChangeRate; // 평균 넛지율 증감률 (%)
+
         private String nudgeCountTrend; // 넛지 건수 트렌드 (UP/DOWN/SAME)
         private String successRateTrend; // 성공률 트렌드 (UP/DOWN/SAME)
+        private String averageNudgeRateTrend; // 평균 넛지율 트렌드 (UP/DOWN/SAME)
     }
 }
