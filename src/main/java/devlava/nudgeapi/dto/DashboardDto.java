@@ -18,8 +18,9 @@ public class DashboardDto {
     private CurrentAnalyzeDto currentAnalyze = new CurrentAnalyzeDto(); // 영업일 기준, 하루전 통계
     private List<NudgeResponseDto> monthDatas = new ArrayList<>(); // 이달 전체 데이터
     private List<NudgeResponseDto> currentDatas = new ArrayList<>(); // 전일 전체 데이터
-    private List<SuccessStoryDto> colleagueSuccesㅋsStories = new ArrayList<>(); // 동료 성공 사례
+    private List<SuccessStoryDto> colleagueSuccessStories = new ArrayList<>(); // 동료 성공 사례
     private PointInfoDto pointInfo = new PointInfoDto(); // 포인트 정보
+    private RankInfoDto rankInfo = new RankInfoDto(); // 순위 정보
 
     @Data
     @Builder
@@ -93,4 +94,29 @@ public class DashboardDto {
         private int teamRank; // 팀 내 순위
         private int weeklyEarned; // 이번주 적립 포인트
     }
-} 
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RankInfoDto {
+        private int myRank; // 내 순위
+        private int totalMembers; // 전체 구성원 수
+        private int myNudgeCount; // 내 넛지 건수
+        private int topNudgeCount; // 1위 넛지 건수
+        private double rankPercentage; // 순위 백분율 (상위 %)
+        private List<TopRankerDto> topRankers; // 상위 5명 정보
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TopRankerDto {
+        private String userId; // 사용자 ID
+        private String userName; // 사용자명
+        private String deptName; // 부서명
+        private int nudgeCount; // 넛지 건수
+        private int rank; // 순위
+    }
+}

@@ -29,6 +29,8 @@ public class AdminDashboardDto {
         private Integer totalCount; // 부서 전체 총 건수
         private Integer totalNudgeCount; // 부서 전체 넛지 건수
         private Integer totalSuccessCount; // 부서 전체 성공 건수
+        private BigDecimal nudgeSuccessRate; // 넛지 성공률
+        private MonthlyComparisonDto monthlyComparison; // 전월 대비 증감 정보
         private List<UserNudgeStats> userStats; // 부서별 사용자 통계 목록
     }
 
@@ -95,5 +97,24 @@ public class AdminDashboardDto {
         private Integer crmCount; // CRM 건수
         private Integer tdsCount; // TDS 건수
         private BigDecimal nudgeRate; // 넛지율 (nudgeCount / totalCount)
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MonthlyComparisonDto {
+        private Integer prevMonthNudgeCount; // 전월 넛지 건수
+        private Integer currentMonthNudgeCount; // 이달 넛지 건수
+        private Integer nudgeCountDiff; // 넛지 건수 증감
+        private BigDecimal nudgeCountChangeRate; // 넛지 건수 증감률 (%)
+
+        private BigDecimal prevMonthSuccessRate; // 전월 넛지 성공률
+        private BigDecimal currentMonthSuccessRate; // 이달 넛지 성공률
+        private BigDecimal successRateDiff; // 넛지 성공률 증감
+        private BigDecimal successRateChangeRate; // 넛지 성공률 증감률 (%)
+
+        private String nudgeCountTrend; // 넛지 건수 트렌드 (UP/DOWN/SAME)
+        private String successRateTrend; // 성공률 트렌드 (UP/DOWN/SAME)
     }
 }

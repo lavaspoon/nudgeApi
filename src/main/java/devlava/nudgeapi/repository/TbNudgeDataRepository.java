@@ -14,6 +14,13 @@ public interface TbNudgeDataRepository extends JpaRepository<TbNudgeData, Long> 
         @Query("SELECT COUNT(n) FROM TbNudgeData n WHERE n.userId = :userId AND n.nudgeYn = 'Y' AND n.consultationDate LIKE :datePrefix%")
         Integer countNudgeByUserIdAndDate(@Param("userId") String userId, @Param("datePrefix") String datePrefix);
 
+        /**
+         * 특정 사용자의 특정 날짜 넛지 성공 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n WHERE n.userId = :userId AND n.nudgeYn = 'Y' AND n.customerConsentYn = 'Y' AND n.consultationDate LIKE :datePrefix%")
+        Integer countNudgeSuccessByUserIdAndDate(@Param("userId") String userId,
+                        @Param("datePrefix") String datePrefix);
+
         @Query("SELECT COUNT(n) FROM TbNudgeData n WHERE n.userId = :userId AND n.nudgeYn = 'Y' AND n.consultationDate LIKE :monthPrefix%")
         Integer countMonthlyNudgeByUserId(@Param("userId") String userId, @Param("monthPrefix") String monthPrefix);
 
@@ -265,4 +272,43 @@ public interface TbNudgeDataRepository extends JpaRepository<TbNudgeData, Long> 
                         "ORDER BY m.deptIdx, SUBSTRING(n.consultationDate, 1, 6)")
         List<Object[]> findDeptMonthlyStatsByMonths(@Param("deptIds") List<Integer> deptIds,
                         @Param("months") List<String> months);
+
+        /**
+         * 특정 부서들의 이번달 넛지 건수 순위 조회
+         */
+        @Query("SELECT n.userId, COUNT(n) as nudgeCount " +
+                        "FROM TbNudgeData n " +
+                        "JOIN TbLmsMember m ON n.userId = m.userId " +
+                        "WHERE m.deptIdx IN :deptIds " +
+                        "AND n.nudgeYn = 'Y' " +
+                        "AND n.consultationDate LIKE :monthPrefix% " +
+                        "GROUP BY n.userId " +
+                        "ORDER BY nudgeCount DESC")
+        List<Object[]> findNudgeRankingByDeptIds(@Param("deptIds") List<Integer> deptIds,
+                        @Param("monthPrefix") String monthPrefix);
+
+        /**
+         * 특정 사용자의 이번달 넛지 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId = :userId " +
+                        "AND n.nudgeYn = 'Y' " +
+                        "AND n.consultationDate LIKE :monthPrefix%")
+        Integer countUserMonthlyNudge(@Param("userId") String userId,
+                        @Param("monthPrefix") String monthPrefix);
+
+        /**
+         * 부서별 월별 넛지 통계 조회 (전월 대비 비교용)
+         */
+        @Query("SELECT m.deptIdx, m.deptName, " +
+                        "COUNT(n) as totalCount, " +
+                        "SUM(CASE WHEN n.nudgeYn = 'Y' THEN 1 ELSE 0 END) as nudgeCount, " +
+                        "SUM(CASE WHEN n.customerConsentYn = 'Y' THEN 1 ELSE 0 END) as successCount " +
+                        "FROM TbNudgeData n " +
+                        "JOIN TbLmsMember m ON n.userId = m.userId " +
+                        "WHERE m.deptIdx IN :deptIds " +
+                        "AND n.consultationDate LIKE :monthPrefix% " +
+                        "GROUP BY m.deptIdx, m.deptName")
+        List<Object[]> findDeptMonthlyComparisonStats(@Param("deptIds") List<Integer> deptIds,
+                        @Param("monthPrefix") String monthPrefix);
 }

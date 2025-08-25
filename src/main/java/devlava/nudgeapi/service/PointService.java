@@ -30,6 +30,12 @@ public class PointService {
     private static final int BASE_POINT_PER_NUDGE = 50;
 
     /**
+     * 넛지 성공 시 추가 지급 포인트
+     * customerConsentYn이 'Y'인 경우 추가 지급
+     */
+    private static final int SUCCESS_BONUS_POINT = 30;
+
+    /**
      * 사용자의 현재 포인트 정보 조회
      * 
      * @param userId 사용자 ID
@@ -76,7 +82,7 @@ public class PointService {
      *                5. 사용자 포인트 요약 정보 업데이트
      */
     public void calculateAndRewardDailyPoints(String userId, String dateStr) {
-        // Step 1: 해당 날짜의 넛지 건수 조회
+        // Step 1: 해당 날짜의 넛지 건수 및 성공 건수 조회
         // TB_NUDGE_DATA에서 nudge_yn='Y'이고 consulation_date가 dateStr로 시작하는 레코드 수 조회
         // 예: dateStr="20250811"이면 "20250811%" 패턴으로 검색하여 8월 11일의 모든 넛지 건수 조회
         System.out.println("DEBUG: " + userId + " 사용자의 " + dateStr + " 날짜로 넛지 건수 조회 시작");
@@ -88,6 +94,10 @@ public class PointService {
             System.out.println("DEBUG: " + userId + " 사용자의 " + dateStr + " 날짜에 넛지 건수가 없습니다.");
             return;
         }
+
+        // 성공 건수 조회 (customerConsentYn = 'Y')
+        Integer dailySuccessCount = nudgeDataRepository.countNudgeSuccessByUserIdAndDate(userId, dateStr);
+        System.out.println("DEBUG: " + userId + " 사용자의 일일 넛지 성공 건수: " + dailySuccessCount);
 
         // Step 2: 이달 총 넛지 건수 조회 (등급 계산용)
         // dateStr에서 앞 6자리만 추출하여 년월 정보 생성 (예: "20250811" → "202508")
@@ -108,13 +118,17 @@ public class PointService {
         // 기본 포인트 = 일일 넛지 건수 × 50포인트
         int basePoints = dailyNudgeCount * BASE_POINT_PER_NUDGE;
 
+        // 성공 보너스 포인트 = 일일 성공 건수 × 30포인트
+        int successBonusPoints = (dailySuccessCount != null ? dailySuccessCount : 0) * SUCCESS_BONUS_POINT;
+
         // 등급별 보너스 포인트 = 기본 포인트 × 등급별 보너스 비율
         // 예: Silver 등급(10% 보너스)에서 기본 포인트가 200이면 → 200 × 0.1 = 20 보너스 포인트
-        int bonusPoints = (int) (basePoints * currentGrade.getBonusRate());
+        int gradeBonusPoints = (int) (basePoints * currentGrade.getBonusRate());
 
-        // 최종 지급 포인트 = 기본 포인트 + 보너스 포인트
-        int totalPoints = basePoints + bonusPoints;
-        System.out.println("DEBUG: " + userId + " 사용자의 포인트 계산 완료 - 기본: " + basePoints + ", 보너스: " + bonusPoints
+        // 최종 지급 포인트 = 기본 포인트 + 성공 보너스 포인트 + 등급별 보너스 포인트
+        int totalPoints = basePoints + successBonusPoints + gradeBonusPoints;
+        System.out.println("DEBUG: " + userId + " 사용자의 포인트 계산 완료 - 기본: " + basePoints + ", 성공보너스: " + successBonusPoints
+                + ", 등급보너스: " + gradeBonusPoints
                 + ", 총합: " + totalPoints);
 
         // Step 5: 포인트 적립 기록을 TB_NUDGE_POINT 테이블에 저장
@@ -124,11 +138,17 @@ public class PointService {
         // 날짜 문자열을 읽기 쉬운 형태로 변환 (예: "20250817" → "8월17일")
         String readableDate = convertToReadableDate(dateStr);
 
+        // 포인트 적립 사유 구성
+        String pointReason = readableDate + " 넛지 활동 보상 (" + dailyNudgeCount + "건)";
+        if (dailySuccessCount != null && dailySuccessCount > 0) {
+            pointReason += " + 성공 보너스 (" + dailySuccessCount + "건)";
+        }
+
         TbNudgePoint pointRecord = TbNudgePoint.builder()
                 .userId(userId) // 사용자 ID
                 .pointAmount(totalPoints) // 지급 포인트 수량
                 .pointType("EARN") // 적립 구분 (EARN/SPEND)
-                .pointReason(readableDate + " 넛지 활동 보상 (" + dailyNudgeCount + "건)") // 적립 사유
+                .pointReason(pointReason) // 적립 사유
                 .nudgeCount(dailyNudgeCount) // 해당일 넛지 건수
                 .grade(currentGrade.getGradeName()) // 적립 시점의 등급
                 .gradeBonusRate(BigDecimal.valueOf(currentGrade.getBonusRate())) // 등급별 보너스 비율
@@ -150,7 +170,7 @@ public class PointService {
         System.out.println("DEBUG: " + userId + " 사용자의 월 확인 - 현재: " + currentMonth + ", 마지막 처리: " + lastProcessedMonth);
 
         if (lastProcessedMonth != null && !lastProcessedMonth.equals(currentMonth)) {
-            // 새로운 월이 시작되었으므로 등급과 월간 넛지 건수 초기화
+            // 새로운 월이 시작되었으므로 월간 넛지 건수만 초기화 (등급은 유지하지 않음)
             System.out
                     .println("DEBUG: " + userId + " 사용자의 월이 바뀜 - 이전: " + lastProcessedMonth + ", 현재: " + currentMonth);
             System.out.println("DEBUG: " + userId + " 사용자의 월별 데이터 초기화 시작");

@@ -25,3 +25,12 @@ logging:
     root: INFO
     devlava.nudgeapi: DEBUG
     org.springframework.orm.jpa: DEBUG
+
+# 부서 설정
+dept:
+  ranking:
+    target-depts: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  admin-dashboard:
+    target-depts: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  point:
+    target-comp-codes: ["35", "20"]
