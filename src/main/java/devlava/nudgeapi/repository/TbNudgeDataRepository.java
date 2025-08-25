@@ -323,32 +323,4 @@ public interface TbNudgeDataRepository extends JpaRepository<TbNudgeData, Long> 
                         "AND n.consultationDate LIKE :monthPrefix%")
         BigDecimal findAverageNudgeRateByMonth(@Param("deptIds") List<Integer> deptIds,
                         @Param("monthPrefix") String monthPrefix);
-
-        /**
-         * 모든 부서의 넛지 통계를 한 번에 조회 (N+1 방지)
-         */
-        @Query("SELECT m.deptIdx, " +
-                        "COUNT(n) as totalCount, " +
-                        "SUM(CASE WHEN n.nudgeYn = 'Y' THEN 1 ELSE 0 END) as nudgeCount, " +
-                        "SUM(CASE WHEN n.customerConsentYn = 'Y' THEN 1 ELSE 0 END) as successCount " +
-                        "FROM TbNudgeData n " +
-                        "JOIN TbLmsMember m ON n.userId = m.userId " +
-                        "WHERE m.deptIdx IN :deptIds " +
-                        "AND n.consultationDate LIKE :monthPrefix% " +
-                        "GROUP BY m.deptIdx")
-        List<Object[]> findAllDeptNudgeStatsByMonth(@Param("deptIds") List<Integer> deptIds,
-                        @Param("monthPrefix") String monthPrefix);
-
-        /**
-         * 상위 사용자들의 멤버 정보와 포인트를 한 번에 조회 (N+1 방지)
-         */
-        @Query("SELECT m.userId, m.mbName, m.deptName, " +
-                        "COALESCE(SUM(np.pointAmount), 0) as totalPoints " +
-                        "FROM TbLmsMember m " +
-                        "LEFT JOIN TbNudgePoint np ON m.userId = np.userId " +
-                        "AND np.createdDate LIKE :monthPrefix% " +
-                        "WHERE m.userId IN :userIds " +
-                        "GROUP BY m.userId, m.mbName, m.deptName")
-        List<Object[]> findTopUsersWithPoints(@Param("userIds") List<String> userIds,
-                        @Param("monthPrefix") String monthPrefix);
 }

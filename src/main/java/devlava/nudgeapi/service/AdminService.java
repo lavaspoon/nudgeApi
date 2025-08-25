@@ -419,7 +419,7 @@ public class AdminService {
         }
 
         /**
-         * 랭킹 (최적화된 버전)
+         * 랭킹
          */
         private List<AdminDashboardDto.TopUserStats> getTopUsersByCategory(List<Object[]> topUsersData, String category,
                         String currentMonth) {
@@ -432,12 +432,24 @@ public class AdminService {
                                 .map(data -> (String) data[0])
                                 .collect(Collectors.toList());
 
-                // 사용자 정보와 포인트를 한 번에 조회 (N+1 방지)
-                Map<String, Object[]> userWithPointsMap = new HashMap<>();
-                List<Object[]> userWithPointsData = nudgeDataRepository.findTopUsersWithPoints(topUserIds, currentMonth);
-                for (Object[] data : userWithPointsData) {
-                        String userId = (String) data[0];
-                        userWithPointsMap.put(userId, data);
+                // 사용자 정보 배치 조회 (N+1 방지)
+                Map<String, TbLmsMember> userMap = memberRepository.findAllById(topUserIds)
+                                .stream()
+                                .collect(Collectors.toMap(TbLmsMember::getUserId, user -> user));
+
+                // 포인트 정보 배치 조회 (N+1 방지)
+                Map<String, Integer> pointsMap = new HashMap<>();
+                List<Object[]> pointsData = nudgePointRepository.findTotalPointsByUserIdsThisMonth(topUserIds);
+                for (Object[] pointData : pointsData) {
+                        String userId = (String) pointData[0];
+                        Integer points = ((Number) pointData[1]).intValue();
+                        pointsMap.put(userId, points);
+                }
+                // 포인트 데이터가 없는 사용자는 0으로 설정
+                for (String userId : topUserIds) {
+                        if (!pointsMap.containsKey(userId)) {
+                                pointsMap.put(userId, 0);
+                        }
                 }
 
                 // 넛지 성공률 배치 조회 (N+1 방지)
