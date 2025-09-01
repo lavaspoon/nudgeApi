@@ -323,4 +323,95 @@ public interface TbNudgeDataRepository extends JpaRepository<TbNudgeData, Long> 
                         "AND n.consultationDate LIKE :monthPrefix%")
         BigDecimal findAverageNudgeRateByMonth(@Param("deptIds") List<Integer> deptIds,
                         @Param("monthPrefix") String monthPrefix);
+
+        // 엑셀 데이터 추출을 위한 메서드들
+
+        /**
+         * 사용자 목록의 특정 기간 전체 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId IN :userIds " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate")
+        Long countByUserIdInAndConsultationDateBetween(@Param("userIds") List<String> userIds,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate);
+
+        /**
+         * 사용자 목록의 특정 기간 넛지 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId IN :userIds " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate " +
+                        "AND n.nudgeYn = :nudgeYn")
+        Long countByUserIdInAndConsultationDateBetweenAndNudgeYn(@Param("userIds") List<String> userIds,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate,
+                        @Param("nudgeYn") String nudgeYn);
+
+        /**
+         * 사용자 목록의 특정 기간 넛지 및 긍정 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId IN :userIds " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate " +
+                        "AND n.nudgeYn = :nudgeYn " +
+                        "AND n.customerConsentYn = :customerConsentYn")
+        Long countByUserIdInAndConsultationDateBetweenAndNudgeYnAndCustomerConsentYn(
+                        @Param("userIds") List<String> userIds,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate,
+                        @Param("nudgeYn") String nudgeYn, @Param("customerConsentYn") String customerConsentYn);
+
+        /**
+         * 사용자 목록의 특정 기간 넛지 및 마케팅 유형별 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId IN :userIds " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate " +
+                        "AND n.nudgeYn = :nudgeYn " +
+                        "AND n.marketingType LIKE :marketingType")
+        Long countByUserIdInAndConsultationDateBetweenAndNudgeYnAndMarketingType(@Param("userIds") List<String> userIds,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate,
+                        @Param("nudgeYn") String nudgeYn, @Param("marketingType") String marketingType);
+
+        /**
+         * 특정 사용자의 특정 기간 전체 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId = :userId " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate")
+        Long countByUserIdAndConsultationDateBetween(@Param("userId") String userId,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate);
+
+        /**
+         * 특정 사용자의 특정 기간 넛지 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId = :userId " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate " +
+                        "AND n.nudgeYn = :nudgeYn")
+        Long countByUserIdAndConsultationDateBetweenAndNudgeYn(@Param("userId") String userId,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate,
+                        @Param("nudgeYn") String nudgeYn);
+
+        /**
+         * 특정 사용자의 특정 기간 넛지 및 긍정 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId = :userId " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate " +
+                        "AND n.nudgeYn = :nudgeYn " +
+                        "AND n.customerConsentYn = :customerConsentYn")
+        Long countByUserIdAndConsultationDateBetweenAndNudgeYnAndCustomerConsentYn(@Param("userId") String userId,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate,
+                        @Param("nudgeYn") String nudgeYn, @Param("customerConsentYn") String customerConsentYn);
+
+        /**
+         * 특정 사용자의 특정 기간 넛지 및 마케팅 유형별 건수 조회
+         */
+        @Query("SELECT COUNT(n) FROM TbNudgeData n " +
+                        "WHERE n.userId = :userId " +
+                        "AND n.consultationDate BETWEEN :startDate AND :endDate " +
+                        "AND n.nudgeYn = :nudgeYn " +
+                        "AND n.marketingType LIKE :marketingType")
+        Long countByUserIdAndConsultationDateBetweenAndNudgeYnAndMarketingType(@Param("userId") String userId,
+                        @Param("startDate") String startDate, @Param("endDate") String endDate,
+                        @Param("nudgeYn") String nudgeYn, @Param("marketingType") String marketingType);
 }
